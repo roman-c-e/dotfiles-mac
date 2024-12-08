@@ -6,8 +6,8 @@
 brew install git
 
 ## Clone this repository
-### Link dotfiles
-ln -s ~/PATH/dotfiles-mac/config ~/.config
+### Link dotfiles (check path)
+ln -s ~/Developer/personal/dotfiles-mac/config ~/.config
 ln -s ~/.config/zsh/zshrc ~/.zshrc
 
 ## Install CLI Tools
