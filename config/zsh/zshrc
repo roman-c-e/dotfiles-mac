@@ -1,0 +1,24 @@
+# ZSH Home
+export ZSH=$HOME/.config/zsh
+export PERSONAL_FILES=$HOME/.personal-files
+
+# Created by Zap installer
+[ -f "${XDG_DATA_HOME:-$HOME/.local/share}/zap/zap.zsh" ] && source "${XDG_DATA_HOME:-$HOME/.local/share}/zap/zap.zsh"
+
+# autosuggestions while typing
+plug "zsh-users/zsh-autosuggestions"
+# syntax highlighting while typing
+plug "zsh-users/zsh-syntax-highlighting"
+
+# Theme for zsh-syntax-highlighting
+source "$ZSH/themes/zsh-highlight-catppuccin.zsh"
+source "$ZSH/aliases.zsh"
+source "$ZSH/exports.zsh"
+
+# History won't save duplicates.
+setopt HIST_IGNORE_ALL_DUPS
+# History won't show duplicates on search.
+setopt HIST_FIND_NO_DUPS
+
+# Add Starship prompt
+eval "$(starship init zsh)"
