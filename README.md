@@ -13,5 +13,8 @@ ln -s ~/.config/zsh/zshrc ~/.zshrc
 ## Install CLI Tools
 zsh <(curl -s https://raw.githubusercontent.com/zap-zsh/zap/master/install.zsh) --branch release-v1 -k
 brew install --cask kitty
-brew install starship
+brew install starship gitui neovim zellij
 
+## Neovim
+curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+### NEOVIM Install Plugins :PlugInstall
