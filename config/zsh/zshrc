@@ -22,3 +22,4 @@ setopt HIST_FIND_NO_DUPS
 
 # Add Starship prompt
 eval "$(starship init zsh)"
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
