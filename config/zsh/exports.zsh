@@ -5,7 +5,7 @@ export HISTSIZE=10000
 export SAVEHIST=10000
 
 export EDITOR="nvim"
-#export BROWSER="firefox"
+export BROWSER="firefox\ nightly"
 
 # Path Variables
 export VISUAL='nvim'
