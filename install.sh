@@ -33,13 +33,22 @@ brew install marta
 brew install alfred
 brew install karabiner-elements
 
-### Applications
+### Productivity
 brew install --cask 1password
 brew install 1password-cli
+brew install --cask postman
+brew install todoist
+brew install --cask google-drive
+brew install --cask moonlight
 
 ### Media
 brew install --cask vlc
 brew install --cask spotify
+
+### Social
+brew install slack
+brew install --cask discord
+brew install telegram
 
 ### Fonts
 brew install --cask font-jetbrains-mono
