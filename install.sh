@@ -44,6 +44,7 @@ brew install --cask moonlight
 ### Media
 brew install --cask vlc
 brew install --cask spotify
+brew install --cask comictagger
 
 ### Social
 brew install slack
