@@ -32,6 +32,7 @@ brew install --cask alt-tab
 brew install marta
 brew install alfred
 brew install karabiner-elements
+brew install koekeishiya/formulae/skhd
 
 ### Productivity
 brew install --cask 1password
@@ -65,3 +66,6 @@ defaults write com.apple.dock autohide -bool true
 defaults write com.apple.Finder AppleShowAllFiles -bool true
 defaults write com.apple.finder ShowStatusBar -bool true
 defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
+
+# Start Services
+skhd --start-service

@@ -52,7 +52,7 @@
                         ]
                     },
                     {
-                        "description": "MEH: CAPS_LOCK > LSHIFT+LCTRL+LOPT or ESC (If Alone)",
+                        "description": "HYPER1: CAPS_LOCK > LSHIFT+LCTRL+LOPT or ESC (If Alone)",
                         "manipulators": [
                             {
                                 "from": {
@@ -71,7 +71,7 @@
                         ]
                     },
                     {
-                        "description": "HYPER: TAB > LSHIFT+LCTRL+LOPT+LCMD or TAB (if Alone)",
+                        "description": "HYPER2: TAB > LSHIFT+LCTRL+LOPT+LCMD or TAB (if Alone)",
                         "manipulators": [
                             {
                                 "from": {
@@ -331,12 +331,12 @@
                             "to": [{ "key_code": "left_command" }]
                         },
                         {
-                            "from": { "key_code": "right_control" },
-                            "to": [{ "key_code": "right_option" }]
-                        },
-                        {
                             "from": { "key_code": "right_option" },
                             "to": [{ "key_code": "right_command" }]
+                        },
+                        {
+                            "from": { "key_code": "right_control" },
+                            "to": [{ "key_code": "right_option" }]
                         }
                     ]
                 }
