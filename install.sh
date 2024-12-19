@@ -41,6 +41,7 @@ brew install --cask postman
 brew install todoist
 brew install --cask google-drive
 brew install --cask moonlight
+brew install --cask jdownloader
 
 ### Media
 brew install --cask vlc
