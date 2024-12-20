@@ -60,13 +60,17 @@ brew install --cask font-meslo-lg-nerd-font
 
 # Mac App Store Apps
 echo "Installing Mac App Store Apps..."
-mas install 1451685025 #Wireguard
+#Wireguard
+mas install 1451685025
+#Magnet
+mas install 441258766
 
 # Mac Settings
 defaults write com.apple.dock autohide -bool true
 defaults write com.apple.Finder AppleShowAllFiles -bool true
 defaults write com.apple.finder ShowStatusBar -bool true
 defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
+defaults write com.apple.dock workspaces-auto-swoosh -bool NO
 
 # Start Services
 skhd --start-service
