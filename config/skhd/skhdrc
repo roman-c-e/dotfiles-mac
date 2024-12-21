@@ -2,32 +2,20 @@
 #                     be found at https://github.com/koekeishiya/skhd/issues/1
 #
 #                     A hotkey is written according to the following rules:
-#
 #                       hotkey       = <mode> '<' <action> | <action>
-#
 #                       mode         = 'name of mode' | <mode> ',' <mode>
-#
 #                       action       = <keysym> '[' <proc_map_lst> ']' | <keysym> '->' '[' <proc_map_lst> ']'
 #                                      <keysym> ':' <command>          | <keysym> '->' ':' <command>
 #                                      <keysym> ';' <mode>             | <keysym> '->' ';' <mode>
-#
 #                       keysym       = <mod> '-' <key> | <key>
-#
 #                       mod          = 'modifier keyword' | <mod> '+' <mod>
-#
 #                       key          = <literal> | <keycode>
-#
 #                       literal      = 'single letter or built-in keyword'
-#
 #                       keycode      = 'apple keyboard kVK_<Key> values (0x3C)'
-#
 #                       proc_map_lst = * <proc_map>
-#
 #                       proc_map     = <string> ':' <command> | <string>     '~' |
 #                                      '*'      ':' <command> | '*'          '~'
-#
 #                       string       = '"' 'sequence of characters' '"'
-#
 #                       command      = command is executed through '$SHELL -c' and
 #                                      follows valid shell syntax. if the $SHELL environment
 #                                      variable is not set, it will default to '/bin/bash'.
@@ -38,11 +26,8 @@
 #                                      prepend '\' at the end of the previous line.
 #
 #                                      an EOL character signifies the end of the bind.
-#
 #                       ->           = keypress is not consumed by skhd
-#
 #                       *            = matches every application not specified in <proc_map_lst>
-#
 #                       ~            = application is unbound and keypress is forwarded per usual, when specified in a <proc_map>
 #
 #  NOTE(koekeishiya): A mode is declared according to the following rules:
@@ -65,30 +50,6 @@
 #
 #                                   an EOL character signifies the end of the bind.
 
-# add an on_enter command to the default mode
-# :: default : yabai -m config active_window_border_color 0xff775759
-#
-# defines a new mode 'test' with an on_enter command, that captures keypresses
-# :: test @ : yabai -m config active_window_border_color 0xff24ccaa
-#
-# from 'default' mode, activate mode 'test'
-# cmd - x ; test
-#
-# from 'test' mode, activate mode 'default'
-# test < cmd - x ; default
-#
-# launch a new terminal instance when in either 'default' or 'test' mode
-# default, test < cmd - return : open -na /Applications/Terminal.app
-
-# application specific bindings
-#
-# cmd - n [
-#     "kitty"       : echo "hello kitty"
-#     *             : echo "hello everyone"
-#     "qutebrowser" : echo "hello qutebrowser"
-#     "terminal"    ~
-#     "finder"      : false
-# ]
 
 # specify a file that should be included as an additional config-file.
 # treated as an absolutepath if the filename begins with '/' otherwise
@@ -96,6 +57,8 @@
 #
 # .load "/Users/Koe/.config/partial_skhdrc"
 # .load "partial_skhdrc"
+
+#.load "skhd_yabai"
 
 # prevent skhd from monitoring events for specific applications.
 #
@@ -137,11 +100,6 @@ lshift + lctrl + lalt - t : open -a kitty
 #Music
 #IDE
 #terminal
-
-
-
-
-
 
 
 

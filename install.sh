@@ -33,6 +33,10 @@ brew install marta
 brew install alfred
 brew install karabiner-elements
 brew install koekeishiya/formulae/skhd
+#brew tap FelixKratz/formulae
+#brew install sketchybar
+brew install --cask nikitabobko/tap/aerospace
+#brew install koekeishiya/formulae/yabai
 
 ### Productivity
 brew install --cask 1password
@@ -57,13 +61,14 @@ brew install telegram
 brew install --cask font-jetbrains-mono
 brew install --cask font-fira-code
 brew install --cask font-meslo-lg-nerd-font
+brew install --cask font-hack-nerd-font
 
 # Mac App Store Apps
 echo "Installing Mac App Store Apps..."
 #Wireguard
 mas install 1451685025
 #Magnet
-mas install 441258766
+#mas install 441258766
 
 # Mac Settings
 defaults write com.apple.dock autohide -bool true
@@ -71,6 +76,13 @@ defaults write com.apple.Finder AppleShowAllFiles -bool true
 defaults write com.apple.finder ShowStatusBar -bool true
 defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
 defaults write com.apple.dock workspaces-auto-swoosh -bool NO
+#defaults write NSGlobalDomain _HIHideMenuBar -bool true
+defaults write -g NSWindowShouldDragOnGesture -bool true
+defaults write -g NSAutomaticWindowAnimationsEnabled -bool false
+
+
 
 # Start Services
 skhd --start-service
+#brew services start sketchybar
+#yabai --start-service
