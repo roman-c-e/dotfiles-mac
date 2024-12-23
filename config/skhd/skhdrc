@@ -58,7 +58,7 @@
 # .load "/Users/Koe/.config/partial_skhdrc"
 # .load "partial_skhdrc"
 
-#.load "skhd_yabai"
+.load "skhd_yabai"
 
 # prevent skhd from monitoring events for specific applications.
 #
@@ -78,17 +78,16 @@
 #cmd - m : open -na /Applications/mpv.app $(pbpaste)
 
 # Open Applications - MEH (Tab)
-lshift + lctrl + lalt - a : open -a Todoist
-lshift + lctrl + lalt - b : open -a Firefox\ Nightly
-lshift + lctrl + lalt - c : open -a Calendar
-# lshift + lctrl + lalt - d : open -a EDITOR
-lshift + lctrl + lalt - e : open -a Mail
+lshift + lctrl + lalt - 2 : open -a Firefox\ Nightly
+lshift + lctrl + lalt - 3 : open -a IntelliJ\ IDEA
+lshift + lctrl + lalt - 4 : open -a kitty
+lshift + lctrl + lalt - 5 : open -a Mail ; open -a Calendar
+lshift + lctrl + lalt - 6 : open -a GoodNotes
+lshift + lctrl + lalt - 7 : open -a Messages ; open -a Slack ; open -a Discord
+lshift + lctrl + lalt - 8 : open -a Spotify
 lshift + lctrl + lalt - f : open -a Marta
-lshift + lctrl + lalt - i : open -a IntelliJ\ IDEA
-lshift + lctrl + lalt - m : open -a Spotify
-lshift + lctrl + lalt - n : open -a GoodNotes
-lshift + lctrl + lalt - s : open -a Messages
-lshift + lctrl + lalt - t : open -a kitty
+lshift + lctrl + lalt - t : open -a Todoist
+# lshift + lctrl + lalt - d : open -a EDITOR
 #lshift + lctrl + lalt - v : CLIPBOARD HISTORY
 
 # Open Applications - HYPER (Caps Lock)

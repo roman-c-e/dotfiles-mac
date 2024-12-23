@@ -25,6 +25,7 @@ brew install ripgrep
 brew install imagemagick
 brew install rar
 brew install wget
+brew install zoxide
 
 ### Mac Enhancements
 brew install mas # Mac App Store CLI
@@ -35,8 +36,8 @@ brew install karabiner-elements
 brew install koekeishiya/formulae/skhd
 #brew tap FelixKratz/formulae
 #brew install sketchybar
-brew install --cask nikitabobko/tap/aerospace
-#brew install koekeishiya/formulae/yabai
+#brew install --cask nikitabobko/tap/aerospace
+brew install koekeishiya/formulae/yabai
 
 ### Productivity
 brew install --cask 1password
@@ -79,10 +80,11 @@ defaults write com.apple.dock workspaces-auto-swoosh -bool NO
 #defaults write NSGlobalDomain _HIHideMenuBar -bool true
 defaults write -g NSWindowShouldDragOnGesture -bool true
 defaults write -g NSAutomaticWindowAnimationsEnabled -bool false
+defaults write AppleWindowTabbingMode -string always
 
 
 
 # Start Services
 skhd --start-service
 #brew services start sketchybar
-#yabai --start-service
+yabai --start-service
