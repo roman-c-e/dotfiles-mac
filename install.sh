@@ -26,6 +26,10 @@ brew install imagemagick
 brew install rar
 brew install wget
 brew install zoxide
+brew install yazi
+brew install poppler
+brew install ffmpeg
+brew install sevenzip
 
 ### Mac Enhancements
 brew install mas # Mac App Store CLI
