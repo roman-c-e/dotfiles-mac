@@ -91,15 +91,3 @@ lshift + lctrl + lalt - t : open -a Todoist
 #lshift + lctrl + lalt - v : CLIPBOARD HISTORY
 
 # Open Applications - HYPER (Caps Lock)
-
-
-#Browser
-#Notes
-#Communication
-#Music
-#IDE
-#terminal
-
-
-
-
