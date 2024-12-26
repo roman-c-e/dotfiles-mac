@@ -37,7 +37,8 @@ brew install --cask alt-tab
 brew install marta
 brew install alfred
 brew install karabiner-elements
-brew install koekeishiya/formulae/skhd
+brew install hammerspoon --cask
+
 #brew tap FelixKratz/formulae
 #brew install sketchybar
 #brew install --cask nikitabobko/tap/aerospace
@@ -86,9 +87,6 @@ defaults write -g NSWindowShouldDragOnGesture -bool true
 defaults write -g NSAutomaticWindowAnimationsEnabled -bool false
 defaults write AppleWindowTabbingMode -string always
 
-
-
 # Start Services
-skhd --start-service
 #brew services start sketchybar
 yabai --start-service

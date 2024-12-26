@@ -3,7 +3,7 @@
 # Link dotfiles
 ln -s ~/Developer/personal/dotfiles-mac/config ~/.config
 ln -s ~/.config/zsh/zshrc ~/.zshrc
-ln -s ~/.config/skhd/skhdrc ~/.skhdrc
+ln -s ~/.config/hammerspoon ~/.hammerspoon
 
 # Install CLI Tools
 zsh <(curl -s https://raw.githubusercontent.com/zap-zsh/zap/master/install.zsh) --branch release-v1 -k
