@@ -8,6 +8,7 @@ brew analytics off
 echo "Installing Brew Formulae..."
 ### Essentials
 brew install git
+brew install --cask docker
 
 ### Languages
 brew install php
