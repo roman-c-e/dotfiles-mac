@@ -31,6 +31,7 @@ brew install yazi
 brew install poppler
 brew install ffmpeg
 brew install sevenzip
+brew install jless
 
 ### Mac Enhancements
 brew install mas # Mac App Store CLI
@@ -49,7 +50,6 @@ brew install koekeishiya/formulae/yabai
 brew install --cask 1password
 brew install 1password-cli
 brew install --cask postman
-brew install todoist
 brew install --cask google-drive
 brew install --cask moonlight
 brew install --cask jdownloader
