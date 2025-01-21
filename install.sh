@@ -12,6 +12,7 @@ brew install --cask docker
 
 ### Languages
 brew install php
+brew install rust
 
 ### Terminal
 brew install --cask kitty

@@ -1,6 +1,10 @@
 # ZSH Home
 export ZSH=$HOME/.config/zsh
 export PERSONAL_FILES=$HOME/.personal-files
+export GOPATH=$HOME/go
+export GOBIN=$GOPATH/bin
+export PATH=$PATH:$GOPATH
+export PATH=$PATH:$GOPATH/bin
 
 # Created by Zap installer
 [ -f "${XDG_DATA_HOME:-$HOME/.local/share}/zap/zap.zsh" ] && source "${XDG_DATA_HOME:-$HOME/.local/share}/zap/zap.zsh"
