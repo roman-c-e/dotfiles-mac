@@ -36,7 +36,6 @@ brew install jless
 
 ### Mac Enhancements
 brew install mas # Mac App Store CLI
-brew install --cask alt-tab
 brew install marta
 brew install alfred
 brew install karabiner-elements
