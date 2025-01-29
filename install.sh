@@ -44,8 +44,7 @@ brew install hammerspoon --cask
 
 #brew tap FelixKratz/formulae
 #brew install sketchybar
-#brew install --cask nikitabobko/tap/aerospace
-brew install koekeishiya/formulae/yabai
+brew install --cask nikitabobko/tap/aerospace
 
 ### Productivity
 brew install --cask 1password
@@ -91,4 +90,3 @@ defaults write AppleWindowTabbingMode -string always
 
 # Start Services
 #brew services start sketchybar
-yabai --start-service

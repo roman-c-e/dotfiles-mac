@@ -8,4 +8,3 @@ hs.loadSpoon("LeftRightHotkey")
 spoon.LeftRightHotkey:start()
 
 require("applications")
-require("yabai")
