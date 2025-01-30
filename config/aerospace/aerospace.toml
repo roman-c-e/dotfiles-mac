@@ -14,6 +14,11 @@ after-startup-command = []
 # Start AeroSpace at login
 start-at-login = true
 
+# TODO Path not working
+# TODO not working in general
+exec-on-workspace-change = ['/Users/roman.c-e/.config/scripts/pip.sh']
+
+
 # Normalizations. See: https://nikitabobko.github.io/AeroSpace/guide#normalization
 enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true
@@ -156,7 +161,13 @@ if.app-id = 'com.apple.systempreferences'
 run = ['layout floating']
 
 [[on-window-detected]]
-if.app-id = 'org.mozilla.firefox'
+if.app-id = 'org.mozilla.nightly'
+if.window-title-regex-substring = 'Picture-in-Picture'
+run = ['layout floating']
+check-further-callbacks = true
+
+[[on-window-detected]]
+if.app-id = 'org.mozilla.nightly'
 run = ['move-node-to-workspace 2.Browse']
 
 [[on-window-detected]]
