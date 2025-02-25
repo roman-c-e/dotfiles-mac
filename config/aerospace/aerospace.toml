@@ -172,7 +172,10 @@ run = ['move-node-to-workspace 2.Browse']
 
 [[on-window-detected]]
 if.app-id = 'com.jetbrains.intellij'
-run = ['move-node-to-workspace 3.IDE']
+run = [
+    'layout floating',
+    'move-node-to-workspace 3.IDE',
+]
 
 [[on-window-detected]]
 if.app-id = 'net.kovidgoyal.kitty'
