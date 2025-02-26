@@ -4,7 +4,7 @@ Swipe = hs.loadSpoon("Swipe")
 local config = {
   fingers = 3,
   -- 0.1 = swipe distance > 10% of trackpad
-  threshold = 0.08,
+  threshold = 0.02,
   showAlert = false,
   alertDuration = 0.4
 }

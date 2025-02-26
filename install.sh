@@ -53,6 +53,7 @@ brew install --cask postman
 brew install --cask google-drive
 brew install --cask moonlight
 brew install --cask jdownloader
+brew install --cask chatgpt
 
 ### Media
 brew install --cask vlc
