@@ -5,16 +5,14 @@ local config = {
   fingers = 3,
   -- 0.1 = swipe distance > 10% of trackpad
   threshold = 0.08,
-  showAlert = true,
+  showAlert = false,
   alertDuration = 0.4
 }
 
 local AEROSPACE = "/usr/local/bin/aerospace"
 function aerospaceExec(cmd)
-  local command = string.format('%s list-workspaces --monitor mouse --visible | xargs %s workspace && %s workspace %s', AEROSPACE, AEROSPACE, AEROSPACE, cmd)
+  os.execute("nohup " .. AEROSPACE .. " " .. cmd .. " &")
 
-  hs.execute(command)
-  
   if config.showAlert then
     hs.alert.show("AeroSpace: " .. cmd, config.alertDuration)
   end
@@ -28,9 +26,9 @@ Swipe:start(config.fingers, function(direction, distance, id)
       -- only trigger once per swipe
       threshold = math.huge
       if direction == "left" then
-        aerospaceExec("next")
-      elseif direction == "right" then 
-        aerospaceExec("prev")
+          aerospaceExec("workspace --wrap-around next")
+      elseif direction == "right" then
+         aerospaceExec("workspace --wrap-around prev")
       end
     end
   else
