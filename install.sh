@@ -15,6 +15,14 @@ brew install php
 brew install rust
 brew install node
 
+### Dev Tools
+brew tap hashicorp/tap
+brew install hashicorp/tap/terraform
+brew install ansible
+brew install hcloud
+brew install kubernetes-cli
+brew install talosctl
+
 ### Terminal
 brew install --cask kitty
 brew install starship

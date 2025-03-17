@@ -125,20 +125,16 @@ cmd-shift-ctrl-alt-1 = 'workspace 1'
 cmd-shift-ctrl-alt-2 = 'workspace 2.Browse'
 cmd-shift-ctrl-alt-3 = 'workspace 3.IDE'
 cmd-shift-ctrl-alt-4 = 'workspace 4.Terminal'
-cmd-shift-ctrl-alt-5 = 'workspace 5.Mail/Calendar'
-cmd-shift-ctrl-alt-6 = 'workspace 6.Files'
-cmd-shift-ctrl-alt-7 = 'workspace 7.Social'
-cmd-shift-ctrl-alt-8 = 'workspace 8.Music'
+cmd-shift-ctrl-alt-6 = 'workspace 5.Files'
+cmd-shift-ctrl-alt-8 = 'workspace 6.Music'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#move-node-to-workspace
 shift-alt-1 = 'move-node-to-workspace 1'
 shift-alt-2 = 'move-node-to-workspace 2.Browse'
 shift-alt-3 = 'move-node-to-workspace 3.IDE'
 shift-alt-4 = 'move-node-to-workspace 4.Terminal'
-shift-alt-5 = 'move-node-to-workspace 5.Mail/Calendar'
-shift-alt-6 = 'move-node-to-workspace 6.Files'
-shift-alt-7 = 'move-node-to-workspace 7.Social'
-shift-alt-8 = 'move-node-to-workspace 8.Music'
+shift-alt-6 = 'move-node-to-workspace 5.Files'
+shift-alt-8 = 'move-node-to-workspace 6.Music'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace-back-and-forth
 alt-tab = 'workspace-back-and-forth'
@@ -182,33 +178,13 @@ if.app-id = 'net.kovidgoyal.kitty'
 run = ['move-node-to-workspace 4.Terminal']
 
 [[on-window-detected]]
-if.app-id = 'com.apple.mail'
-run = ['move-node-to-workspace 5.Mail/Calendar']
-
-[[on-window-detected]]
-if.app-id = 'com.apple.iCal'
-run = ['move-node-to-workspace 5.Mail/Calendar']
-
-[[on-window-detected]]
 if.app-id = 'com.apple.finder'
-run = ['move-node-to-workspace 6.Files']
+run = ['move-node-to-workspace 5.Files']
 
 [[on-window-detected]]
 if.app-id = 'org.yanex.marta'
-run = ['move-node-to-workspace 6.Files']
-
-[[on-window-detected]]
-if.app-id = 'com.tinyspeck.slackmacgap'
-run = ['move-node-to-workspace 7.Social']
-
-[[on-window-detected]]
-if.app-id = 'com.tdesktop.Telegram'
-run = ['move-node-to-workspace 7.Social']
-
-[[on-window-detected]]
-if.app-id = 'com.hnc.Discord'
-run = ['move-node-to-workspace 7.Social']
+run = ['move-node-to-workspace 5.Files']
 
 [[on-window-detected]]
 if.app-id = 'com.spotify.client'
-run = ['move-node-to-workspace 8.Music']
+run = ['move-node-to-workspace 6.Music']
