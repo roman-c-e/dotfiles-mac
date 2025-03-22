@@ -22,6 +22,8 @@ brew install ansible
 brew install hcloud
 brew install kubernetes-cli
 brew install talosctl
+brew install hashicorp/tap/packer
+brew install coreutils
 
 ### Terminal
 brew install --cask kitty
