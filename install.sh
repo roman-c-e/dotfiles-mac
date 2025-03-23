@@ -73,7 +73,6 @@ brew install --cask comictagger
 ### Social
 brew install slack
 brew install --cask discord
-brew install telegram
 
 ### Fonts
 brew install --cask font-jetbrains-mono
