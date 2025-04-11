@@ -133,6 +133,7 @@ shift-alt-2 = 'move-node-to-workspace 2.IDE'
 shift-alt-3 = 'move-node-to-workspace 3.Terminal'
 shift-alt-4 = 'move-node-to-workspace 4.Files'
 shift-alt-5 = 'move-node-to-workspace 5.Music'
+shift-alt-0 = 'move-node-to-monitor next'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace-back-and-forth
 alt-tab = 'workspace-back-and-forth'
@@ -148,6 +149,10 @@ run = ['layout floating']
 
 [[on-window-detected]]
 if.app-id = 'com.apple.systempreferences'
+run = ['layout floating']
+
+[[on-window-detected]]
+if.app-id = 'org.videolan.vlc'
 run = ['layout floating']
 
 [[on-window-detected]]
