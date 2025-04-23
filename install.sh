@@ -60,7 +60,6 @@ brew install --cask nikitabobko/tap/aerospace
 brew install --cask 1password
 brew install 1password-cli
 brew install --cask postman
-brew install --cask google-drive
 brew install --cask moonlight
 brew install --cask jdownloader
 brew install --cask chatgpt
