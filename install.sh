@@ -63,6 +63,10 @@ brew install --cask postman
 brew install --cask moonlight
 brew install --cask jdownloader
 brew install --cask chatgpt
+brew install --cask microsoft-excel
+brew install --cask microsoft-word
+brew install --cask microsoft-outlook
+brew install --cask microsoft-teams
 
 ### Media
 brew install --cask vlc
