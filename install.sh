@@ -83,13 +83,6 @@ brew install --cask font-fira-code
 brew install --cask font-meslo-lg-nerd-font
 brew install --cask font-hack-nerd-font
 
-# Mac App Store Apps
-echo "Installing Mac App Store Apps..."
-#Wireguard
-mas install 1451685025
-#Magnet
-#mas install 441258766
-
 # Mac Settings
 defaults write com.apple.dock autohide -bool true
 defaults write com.apple.Finder AppleShowAllFiles -bool true
@@ -100,6 +93,13 @@ defaults write com.apple.dock workspaces-auto-swoosh -bool NO
 defaults write -g NSWindowShouldDragOnGesture -bool true
 defaults write -g NSAutomaticWindowAnimationsEnabled -bool false
 defaults write AppleWindowTabbingMode -string always
+
+# Mac App Store Apps
+echo "Installing Mac App Store Apps..."
+#Wireguard
+mas install 1451685025
+#Magnet
+#mas install 441258766
 
 # Start Services
 #brew services start sketchybar
