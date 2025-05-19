@@ -121,18 +121,20 @@ cmd-shift-ctrl-alt-f = 'fullscreen'
 shift-ctrl-alt-f = 'macos-native-fullscreen'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace
-cmd-shift-ctrl-alt-1 = 'workspace 1'
+cmd-shift-ctrl-alt-1 = 'workspace 1.Main'
 cmd-shift-ctrl-alt-2 = 'workspace 2.IDE'
 cmd-shift-ctrl-alt-3 = 'workspace 3.Terminal'
 cmd-shift-ctrl-alt-4 = 'workspace 4.Files'
 cmd-shift-ctrl-alt-5 = 'workspace 5.Music'
+cmd-shift-ctrl-alt-6 = 'workspace 6.Social'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#move-node-to-workspace
-shift-alt-1 = 'move-node-to-workspace 1'
+shift-alt-1 = 'move-node-to-workspace 1.Main'
 shift-alt-2 = 'move-node-to-workspace 2.IDE'
 shift-alt-3 = 'move-node-to-workspace 3.Terminal'
 shift-alt-4 = 'move-node-to-workspace 4.Files'
 shift-alt-5 = 'move-node-to-workspace 5.Music'
+shift-alt-6 = 'move-node-to-workspace 6.Social'
 shift-alt-0 = 'move-node-to-monitor next'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace-back-and-forth
@@ -177,3 +179,15 @@ run = ['move-node-to-workspace 4.Files']
 [[on-window-detected]]
 if.app-id = 'com.spotify.client'
 run = ['move-node-to-workspace 5.Music']
+
+[[on-window-detected]]
+if.app-id = 'com.tinyspeck.slackmacgap'
+run = ['move-node-to-workspace 6.Social']
+
+[[on-window-detected]]
+if.app-id = 'com.tdesktop.Telegram'
+run = ['move-node-to-workspace 6.Social']
+
+[[on-window-detected]]
+if.app-id = 'com.hnc.Discord'
+run = ['move-node-to-workspace 6.Social']
