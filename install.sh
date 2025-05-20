@@ -67,6 +67,7 @@ brew install --cask microsoft-excel
 brew install --cask microsoft-word
 brew install --cask microsoft-outlook
 brew install --cask microsoft-teams
+brew install --cask obsidian
 
 ### Media
 brew install --cask vlc
