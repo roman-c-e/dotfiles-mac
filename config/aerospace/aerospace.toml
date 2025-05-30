@@ -14,19 +14,9 @@ after-startup-command = []
 # Start AeroSpace at login
 start-at-login = true
 
-# TODO Path not working
-# TODO not working in general
-exec-on-workspace-change = ['/Users/roman.c-e/.config/scripts/pip.sh']
-
-
 # Normalizations. See: https://nikitabobko.github.io/AeroSpace/guide#normalization
 enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true
-
-# See: https://nikitabobko.github.io/AeroSpace/guide#layouts
-# The 'accordion-padding' specifies the size of accordion padding
-# You can set 0 to disable the padding feature
-accordion-padding = 30
 
 # Possible values: tiles|accordion
 default-root-container-layout = 'tiles'
@@ -156,38 +146,3 @@ run = ['layout floating']
 [[on-window-detected]]
 if.app-id = 'org.videolan.vlc'
 run = ['layout floating']
-
-[[on-window-detected]]
-if.app-id = 'com.jetbrains.intellij'
-run = [
-    'layout floating',
-    'move-node-to-workspace 2.IDE',
-]
-
-[[on-window-detected]]
-if.app-id = 'net.kovidgoyal.kitty'
-run = ['move-node-to-workspace 3.Terminal']
-
-[[on-window-detected]]
-if.app-id = 'com.apple.finder'
-run = ['move-node-to-workspace 4.Files']
-
-[[on-window-detected]]
-if.app-id = 'org.yanex.marta'
-run = ['move-node-to-workspace 4.Files']
-
-[[on-window-detected]]
-if.app-id = 'com.spotify.client'
-run = ['move-node-to-workspace 5.Music']
-
-[[on-window-detected]]
-if.app-id = 'com.tinyspeck.slackmacgap'
-run = ['move-node-to-workspace 6.Social']
-
-[[on-window-detected]]
-if.app-id = 'com.tdesktop.Telegram'
-run = ['move-node-to-workspace 6.Social']
-
-[[on-window-detected]]
-if.app-id = 'com.hnc.Discord'
-run = ['move-node-to-workspace 6.Social']
