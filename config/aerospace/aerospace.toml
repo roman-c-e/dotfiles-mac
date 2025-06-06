@@ -64,19 +64,6 @@ outer.right =      0
 # Fallback value (if you omit the key): mode.main.binding = {}
 [mode.main.binding]
 
-# All possible keys:
-# - Letters.        a, b, c, ..., z
-# - Numbers.        0, 1, 2, ..., 9
-# - Keypad numbers. keypad0, keypad1, keypad2, ..., keypad9
-# - F-keys.         f1, f2, ..., f20
-# - Special keys.   minus, equal, period, comma, slash, backslash, quote, semicolon, backtick,
-#                   leftSquareBracket, rightSquareBracket, space, enter, esc, backspace, tab
-# - Keypad special. keypadClear, keypadDecimalMark, keypadDivide, keypadEnter, keypadEqual,
-#                   keypadMinus, keypadMultiply, keypadPlus
-# - Arrows.         left, down, up, right
-
-# All possible modifiers: cmd, alt, ctrl, shift
-
 # All possible commands: https://nikitabobko.github.io/AeroSpace/commands
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#exec-and-forget
@@ -109,31 +96,6 @@ shift-alt-l = 'move right'
 
 cmd-shift-ctrl-alt-f = 'fullscreen'
 shift-ctrl-alt-f = 'macos-native-fullscreen'
-
-# See: https://nikitabobko.github.io/AeroSpace/commands#workspace
-cmd-shift-ctrl-alt-1 = 'workspace 1.Main'
-cmd-shift-ctrl-alt-2 = 'workspace 2.IDE'
-cmd-shift-ctrl-alt-3 = 'workspace 3.Terminal'
-cmd-shift-ctrl-alt-4 = 'workspace 4.Files'
-cmd-shift-ctrl-alt-5 = 'workspace 5.Music'
-cmd-shift-ctrl-alt-6 = 'workspace 6.Social'
-
-# See: https://nikitabobko.github.io/AeroSpace/commands#move-node-to-workspace
-shift-alt-1 = 'move-node-to-workspace 1.Main'
-shift-alt-2 = 'move-node-to-workspace 2.IDE'
-shift-alt-3 = 'move-node-to-workspace 3.Terminal'
-shift-alt-4 = 'move-node-to-workspace 4.Files'
-shift-alt-5 = 'move-node-to-workspace 5.Music'
-shift-alt-6 = 'move-node-to-workspace 6.Social'
-shift-alt-0 = 'move-node-to-monitor next'
-
-# See: https://nikitabobko.github.io/AeroSpace/commands#workspace-back-and-forth
-alt-tab = 'workspace-back-and-forth'
-# See: https://nikitabobko.github.io/AeroSpace/commands#move-workspace-to-monitor
-alt-shift-tab = 'move-workspace-to-monitor --wrap-around next'
-
-# sticky is not yet supported https://github.com/nikitabobko/AeroSpace/issues/2
-#s = ['layout sticky tiling', 'mode main']
 
 [[on-window-detected]]
 if.app-id = 'com.1password.1password'
