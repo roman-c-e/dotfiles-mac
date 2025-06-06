@@ -25,6 +25,7 @@ brew install talosctl
 brew install hashicorp/tap/packer
 brew install coreutils
 brew install gradle
+brew install --cask mactex-no-gui
 
 ### Terminal
 brew install --cask kitty
@@ -55,7 +56,7 @@ brew install hammerspoon --cask
 
 #brew tap FelixKratz/formulae
 #brew install sketchybar
-#brew install --cask nikitabobko/tap/aerospace
+brew install --cask nikitabobko/tap/aerospace
 
 ### Productivity
 brew install --cask 1password
