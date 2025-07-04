@@ -46,10 +46,10 @@ brew install poppler
 brew install ffmpeg
 brew install sevenzip
 brew install jless
+brew install jq
 
 ### Mac Enhancements
 brew install mas # Mac App Store CLI
-brew install marta
 brew install alfred
 brew install karabiner-elements
 brew install hammerspoon --cask
@@ -75,6 +75,7 @@ brew install --cask obsidian
 brew install --cask vlc
 brew install --cask spotify
 brew install --cask comictagger
+brew install --cask calibre
 
 ### Social
 brew install slack
