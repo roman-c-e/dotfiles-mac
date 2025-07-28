@@ -17,10 +17,10 @@ brew install node
 
 ### Dev Tools
 brew tap hashicorp/tap
-brew install hashicorp/tap/terraform
+  brew install hashicorp/tap/terraform
 brew install ansible
-brew install hcloud
-brew install kubernetes-cli
+  brew install hcloud
+  brew install kubernetes-cli
 brew install talosctl
 brew install hashicorp/tap/packer
 brew install coreutils
@@ -59,8 +59,6 @@ brew install hammerspoon --cask
 brew install --cask nikitabobko/tap/aerospace
 
 ### Productivity
-brew install --cask 1password
-brew install 1password-cli
 brew install --cask postman
 brew install --cask moonlight
 brew install --cask jdownloader
@@ -107,3 +105,15 @@ mas install 1451685025
 
 # Start Services
 #brew services start sketchybar
+
+# Emacs
+echo "Installing Emacs..."
+brew install fd
+brew tap railwaycat/emacsmacport
+brew install emacs-mac --with-modules
+ln -s /opt/homebrew/opt/emacs-mac@29/Emacs.app /Applications/Emacs.app
+
+rm ~/.emacs.d
+git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.config/emacs
+~/.config/emacs/bin/doom install
+
