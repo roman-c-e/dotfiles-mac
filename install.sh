@@ -106,14 +106,4 @@ mas install 1451685025
 # Start Services
 #brew services start sketchybar
 
-# Emacs
-echo "Installing Emacs..."
-brew install fd
-brew tap railwaycat/emacsmacport
-brew install emacs-mac --with-modules
-ln -s /opt/homebrew/opt/emacs-mac@29/Emacs.app /Applications/Emacs.app
-
-rm ~/.emacs.d
-git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.config/emacs
-~/.config/emacs/bin/doom install
 

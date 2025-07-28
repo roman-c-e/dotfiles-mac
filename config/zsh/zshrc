@@ -5,7 +5,6 @@ export GOPATH=$HOME/go
 export GOBIN=$GOPATH/bin
 export PATH=$PATH:$GOPATH
 export PATH=$PATH:$GOPATH/bin
-export PATH=$PATH:$HOME/.config/emacs/bin
 # Add this to ~/.zshrc or ~/.bash_profile
 
 # Created by Zap installer
