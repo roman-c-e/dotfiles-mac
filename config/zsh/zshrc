@@ -5,6 +5,7 @@ export GOPATH=$HOME/go
 export GOBIN=$GOPATH/bin
 export PATH=$PATH:$GOPATH
 export PATH=$PATH:$GOPATH/bin
+export PATH=$PATH:/opt/homebrew/share/google-cloud-sdk/bin
 # Add this to ~/.zshrc or ~/.bash_profile
 
 # Created by Zap installer
@@ -30,3 +31,7 @@ export STARSHIP_CONFIG=$HOME/.config/starship/starship.toml
 eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+
+# Load Angular CLI autocompletion.
+source <(ng completion script)

@@ -8,4 +8,4 @@ hs.loadSpoon("LeftRightHotkey")
 spoon.LeftRightHotkey:start()
 
 require("applications")
-require("switch_space")
+-- require("switch_space")
