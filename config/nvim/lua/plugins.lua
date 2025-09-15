@@ -148,3 +148,41 @@ vim.g["netrw_liststyle"] = 3
 vim.g.NERDTreeShowHidden = 1
 
 vim.g["vimtex_view_method"] = 'zathura'
+
+
+-- Open NERDTree on startup if no files are specified
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    if vim.fn.argc() == 0 and vim.fn.exists(":NERDTree") == 2 then
+      vim.cmd("NERDTree")
+    end
+  end
+})
+
+-- Open NERDTree on new tabs
+vim.api.nvim_create_autocmd("TabNewEntered", {
+  callback = function()
+    if vim.fn.exists(":NERDTree") == 2 then
+      vim.cmd("NERDTree")
+    end
+  end
+})
+
+-- Reopen NERDTree if all NERDTree windows are closed
+vim.api.nvim_create_autocmd("BufWinEnter", {
+  callback = function()
+    local nerdtree_open = false
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      local buf = vim.api.nvim_win_get_buf(win)
+      if vim.api.nvim_buf_get_option(buf, "filetype") == "nerdtree" then
+        nerdtree_open = true
+        break
+      end
+    end
+    if vim.fn.exists(":NERDTree") == 2 and not nerdtree_open then
+      vim.cmd("NERDTree")
+    end
+  end
+})
+
+

@@ -9,6 +9,7 @@ echo "Installing Brew Formulae..."
 ### Essentials
 brew install git
 brew install --cask docker
+brew install --cask visual-studio-code
 
 ### Languages
 brew install php
