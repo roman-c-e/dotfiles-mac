@@ -4,8 +4,8 @@ export HISTSIZE=10000
 # How many commands history will save on file.
 export SAVEHIST=10000
 
-export EDITOR="nvim"
-export BROWSER="firefox"
+export EDITOR="code --nw"
+export BROWSER="safari"
 
 # Path Variables
-export VISUAL='nvim'
+export VISUAL='code --nw'

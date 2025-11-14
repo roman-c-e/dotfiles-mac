@@ -6,7 +6,6 @@ git clone https://github.com/roman-c-e/dotfiles-mac.git ~/Developer/personal/dot
 ./install-config.sh
 
 ## Install Applications from Websites
-Firefox Nightly
 IntelliJ IDEA
 Parsec
 
@@ -14,7 +13,6 @@ Parsec
 ## Aerospace 
 Working mostly
 - Autoraise missing
-- firefox video overflow
 - Issues with multiple monitors
 - Intellij Bug
 ## Sketchybar

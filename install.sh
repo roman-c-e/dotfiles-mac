@@ -30,6 +30,11 @@ brew install --cask mactex-no-gui
 brew install yarn
 brew install --cask gcloud-cli
 brew install Azure/kubelogin/kubelogin
+brew install ruff
+brew install kind
+brew install cilium-cli
+brew install helm
+brew install ollama
 
 ### Terminal
 brew install --cask kitty
@@ -51,18 +56,21 @@ brew install ffmpeg
 brew install sevenzip
 brew install jless
 brew install jq
+brew install uv
 
 ### Mac Enhancements
 brew install mas # Mac App Store CLI
 brew install alfred
 brew install karabiner-elements
 brew install hammerspoon --cask
+brew install --cask balenaetcher
 
 #brew tap FelixKratz/formulae
 #brew install sketchybar
-#brew install --cask nikitabobko/tap/aerospace
+brew install --cask nikitabobko/tap/aerospace
 
 ### Productivity
+brew install --cask vivaldi
 brew install --cask postman
 brew install --cask moonlight
 brew install --cask jdownloader
@@ -78,6 +86,7 @@ brew install --cask vlc
 brew install --cask spotify
 brew install --cask comictagger
 brew install --cask calibre
+brew install --cask obs
 
 ### Social
 brew install slack
