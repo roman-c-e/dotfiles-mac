@@ -57,6 +57,9 @@ brew install sevenzip
 brew install jless
 brew install jq
 brew install uv
+brew install protobuf
+brew install grpc
+brew install grpcurl
 
 ### Mac Enhancements
 brew install mas # Mac App Store CLI
@@ -87,6 +90,7 @@ brew install --cask spotify
 brew install --cask comictagger
 brew install --cask calibre
 brew install --cask obs
+brew install --cask monitorcontrol
 
 ### Social
 brew install slack
