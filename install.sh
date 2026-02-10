@@ -35,6 +35,7 @@ brew install kind
 brew install cilium-cli
 brew install helm
 brew install ollama
+brew install act
 
 ### Terminal
 brew install --cask kitty
