@@ -3,4 +3,7 @@
 /config/jgit/
 /config/op/config
 
+/config/gcloud
+/config/linkerd
+
 .DS_Store
