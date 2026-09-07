@@ -66,7 +66,6 @@ brew install grpcurl
 brew install mas # Mac App Store CLI
 brew install alfred
 brew install karabiner-elements
-brew install --cask balenaetcher
 
 #brew tap FelixKratz/formulae
 #brew install sketchybar
