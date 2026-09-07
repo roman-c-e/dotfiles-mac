@@ -15,3 +15,10 @@ gui:
     "*": "#74c7ec"
   branchColorPatterns:
     ".*": "#94e2d5"
+
+customCommands:
+  - key: "G"
+    context: "files"
+    description: "Draft commit message with Codex, edit, then confirm"
+    command: '"$HOME/.config/scripts/ai-commit"'
+    output: terminal

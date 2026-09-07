@@ -7,3 +7,16 @@
 /config/linkerd
 
 .DS_Store
+
+# Local application state from the former whole-directory ~/.config link.
+/config/configstore/
+/config/enchant/
+/config/gh/hosts.yml
+/config/packer/
+/config/sops/
+/config/opencode/*.bak
+/config/opencode/*.backup-*
+
+# Python test bytecode.
+__pycache__/
+*.py[cod]
