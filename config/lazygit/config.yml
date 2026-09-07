@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/jesseduffield/lazygit/master/schema/config.json
+# Carry over the Catppuccin Mocha colors from ../gitui/mocha.ron.
+# Diff red/green also inherit cmux's matching ANSI palette.
+gui:
+  theme:
+    activeBorderColor: ["#b4befe", bold]
+    inactiveBorderColor: ["#7f849c"]
+    searchingActiveBorderColor: ["#f9e2af", bold]
+    optionsTextColor: ["#cdd6f4"]
+    selectedLineBgColor: ["#585b70"]
+    inactiveViewSelectedLineBgColor: ["#181825"]
+    unstagedChangesColor: ["#fab387"]
+    defaultFgColor: ["#cdd6f4"]
+  authorColors:
+    "*": "#74c7ec"
+  branchColorPatterns:
+    ".*": "#94e2d5"
