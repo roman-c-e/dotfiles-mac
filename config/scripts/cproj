@@ -1,0 +1,119 @@
+#!/bin/zsh
+# Open a Git project in cmux. Paths are quoted before becoming shell commands.
+emulate -L zsh
+setopt pipefail
+
+usage() {
+  print 'Usage: cproj [--new] [--agent codex|claude|opencode|COMMAND] [--root PATH] [--list] [--dry-run] [PROJECT]'
+  print 'Without PROJECT, choose a Git repository using fzf. Default root: ~/diraigent.'
+  print 'Focuses an existing project workspace across windows; --new always creates another.'
+}
+
+agent=${CPROJ_AGENT:-codex}
+root=${CPROJ_ROOT:-$HOME/diraigent}
+project=''
+list_only=0
+dry_run=0
+force_new=0
+while (( $# )); do
+  case "$1" in
+    --agent|--root)
+      (( $# >= 2 )) || { usage >&2; exit 2; }
+      if [[ $1 == --agent ]]; then agent=$2; else root=$2; fi
+      shift 2 ;;
+    --list) list_only=1; shift ;;
+    --new) force_new=1; shift ;;
+    --dry-run) dry_run=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    --) shift; (( $# == 1 )) || { usage >&2; exit 2; }; project=$1; shift ;;
+    -*) print -u2 -- "Unknown option: $1"; exit 2 ;;
+    *) [[ -z $project ]] || { usage >&2; exit 2; }; project=$1; shift ;;
+  esac
+done
+
+if [[ -z $project ]] || (( list_only )); then
+  [[ -d $root ]] || { print -u2 -- "Project root does not exist: $root"; exit 1; }
+  (( $+commands[fd] )) || { print -u2 'Install fd with brew install fd'; exit 1; }
+  # .git can be a directory or a worktree file. Prune matched metadata directories.
+  projects=$(fd --hidden --no-ignore --absolute-path --max-depth 8 --prune \
+    --exclude node_modules --exclude vendor --exclude target --exclude .venv \
+    --exclude build --exclude dist --exclude .gradle --exclude Pods \
+    '^\.git$' "$root" | sed -E 's@/\.git/?$@@' | sort -u) || exit 1
+  [[ -n $projects ]] || { print -u2 -- "No Git projects found under $root"; exit 1; }
+  if (( list_only )); then print -r -- "$projects"; exit 0; fi
+  (( $+commands[fzf] )) || { print -u2 'Install fzf with brew install fzf'; exit 1; }
+  project=$(print -r -- "$projects" | fzf --prompt='Project > ' \
+    --height=80% --layout=reverse --border --no-multi) || exit 0
+fi
+
+[[ -d $project ]] || { print -u2 -- "Project directory does not exist: $project"; exit 1; }
+project=${project:A}
+for tool in jq cmux; do
+  command -v "$tool" >/dev/null || { print -u2 -- "Required command not found: $tool"; exit 1; }
+done
+
+# The description is part of cmux's saved workspace metadata. Unlike a pane's
+# cwd, it remains stable while navigating. No parallel state file is necessary.
+project_marker="cproj:$project"
+if (( ! force_new && ! dry_run )); then
+  tree=$(cmux --json tree --all) || exit 1
+  windows=$(print -r -- "$tree" | jq -er '.windows | map(.ref) | .[]') || {
+    print -u2 'Could not read cmux windows; refusing to create a duplicate.'
+    exit 1
+  }
+  workspace_data='[]'
+  for window in ${(f)windows}; do
+    response=$(cmux --json list-workspaces --window "$window") || exit 1
+    entries=$(print -r -- "$response" | jq -ce --arg window "$window" '
+      .workspaces | map(. + {cproj_window: $window})') || exit 1
+    workspace_data=$(jq -nc --argjson old "$workspace_data" --argjson entries "$entries" \
+      '$old + $entries') || exit 1
+  done
+  existing=$(print -r -- "$workspace_data" | jq -c --arg marker "$project_marker" --arg cwd "$project" '
+    [.[] | select(.remote.enabled != true) |
+      select(.description == $marker or
+        ((.description == null or .description == "") and .current_directory == $cwd))]
+    | sort_by([if .description == $marker then 0 else 1 end,
+               if .has_custom_title then 0 else 1 end,
+               if .selected then 0 else 1 end])
+    | .[0] // empty') || exit 1
+  if [[ -n $existing ]]; then
+    workspace=$(print -r -- "$existing" | jq -er '.id') || exit 1
+    window=$(print -r -- "$existing" | jq -er '.cproj_window') || exit 1
+    # Adopt an older workspace once by saving its root, then only focus it.
+    if [[ $(print -r -- "$existing" | jq -r '.description // ""') != "$project_marker" ]]; then
+      cmux workspace-action --action set-description --workspace "$workspace" \
+        --window "$window" --description "$project_marker" || exit 1
+    fi
+    cmux select-workspace --workspace "$workspace" --window "$window" || exit 1
+    cmux focus-window --window "$window"
+    exit $?
+  fi
+fi
+
+# Reusing a workspace does not require the original agent/editor on PATH.
+for tool in nvim "$agent"; do
+  command -v "$tool" >/dev/null || { print -u2 -- "Required command not found: $tool"; exit 1; }
+done
+
+# Each pane changes directory explicitly; a failed cd never launches the tool.
+agent_command="cd -- ${(q)project} && ${(q)agent}"
+editor_command="cd -- ${(q)project} && nvim"
+shell_command="cd -- ${(q)project}"
+layout=$(jq -nc --arg agent "$agent_command" --arg editor "$editor_command" \
+  --arg shell "$shell_command" --arg agent_name "$agent" '
+  {direction:"horizontal", split:0.5, children:[
+    {pane:{surfaces:[{type:"terminal",name:$agent_name,command:$agent,focus:true}]}},
+    {direction:"vertical",split:0.7,children:[
+      {pane:{surfaces:[{type:"terminal",name:"Editor",command:$editor}]}},
+      {pane:{surfaces:[{type:"terminal",name:"Build / test",command:$shell}]}}
+    ]}
+  ]}') || exit 1
+
+if (( dry_run )); then
+  jq -n --arg name "${project:t}" --arg cwd "$project" --argjson layout "$layout" \
+    '{name:$name,cwd:$cwd,layout:$layout}'
+  exit $?
+fi
+cmux new-workspace --name "${project:t}" --description "$project_marker" \
+  --cwd "$project" --layout "$layout" --focus true

@@ -13,8 +13,9 @@ cask "chatgpt"
 
 # Mac enhancements and remote display client
 cask "alfred"
-cask "karabiner-elements"
 cask "moonlight"
+# Standalone macOS app, matching the current installation.
+cask "tailscale-app"
 brew "mas"
 # Requires an App Store account with access to these apps.
 mas "Magnet", id: 441258766

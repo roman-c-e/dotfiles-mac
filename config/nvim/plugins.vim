@@ -21,7 +21,8 @@ call plug#begin()
   Plug 'lewis6991/gitsigns.nvim'
 
   Plug 'preservim/nerdtree'
-  Plug 'Xuyuanp/nerdtree-git-plugin'
+  " Git changes are shown by gitsigns; the old NERDTree Git plugin generates
+  " invalid highlight commands with the current theme/Neovim combination.
 
   " LaTeX
   Plug 'lervag/vimtex'

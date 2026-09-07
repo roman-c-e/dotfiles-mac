@@ -1,52 +1,64 @@
-# ZSH Home
-export ZSH=$HOME/.config/zsh
-export PERSONAL_FILES=$HOME/.personal-files
-export GOPATH=$HOME/go
-export GOBIN=$GOPATH/bin
-export PATH=$PATH:$GOPATH
-export PATH=$PATH:$GOPATH/bin
-export PATH=$PATH:/opt/homebrew/share/google-cloud-sdk/bin
-# Add this to ~/.zshrc or ~/.bash_profile
+# Shared interactive shell setup for local and remote development.
+export ZSH="$HOME/.config/zsh"
+export PERSONAL_FILES="${PERSONAL_FILES:-$HOME/.personal-files}"
+export GOPATH="${GOPATH:-$HOME/go}"
+export GOBIN="${GOBIN:-$GOPATH/bin}"
 
-# Created by Zap installer
-[ -f "${XDG_DATA_HOME:-$HOME/.local/share}/zap/zap.zsh" ] && source "${XDG_DATA_HOME:-$HOME/.local/share}/zap/zap.zsh"
+# Zsh's path array is tied to PATH; -U keeps the first occurrence of each entry.
+typeset -U path PATH
+path=("$HOME/.config/scripts" "$HOME/.local/bin" "$HOME/.opencode/bin" "$GOBIN" $path)
+# Support Apple Silicon and Intel Homebrew without starting brew on every pane.
+for brew_prefix in /opt/homebrew /usr/local; do
+  if [[ -x "$brew_prefix/bin/brew" ]]; then
+    path+=("$brew_prefix/bin" "$brew_prefix/sbin")
+    [[ -d "$brew_prefix/share/zsh/site-functions" ]] && fpath=("$brew_prefix/share/zsh/site-functions" $fpath)
+    [[ -d "$brew_prefix/share/google-cloud-sdk/bin" ]] && path+=("$brew_prefix/share/google-cloud-sdk/bin")
+    break
+  fi
+done
+unset brew_prefix
+typeset -U fpath
 
-# autosuggestions while typing
-plug "zsh-users/zsh-autosuggestions"
-# syntax highlighting while typing
-plug "zsh-users/zsh-syntax-highlighting"
-
-# Theme for zsh-syntax-highlighting
-source "$ZSH/themes/zsh-highlight-catppuccin.zsh"
-source "$ZSH/aliases.zsh"
 source "$ZSH/exports.zsh"
+source "$ZSH/aliases.zsh"
 
-# History won't save duplicates.
-setopt HIST_IGNORE_ALL_DUPS
-# History won't show duplicates on search.
-setopt HIST_FIND_NO_DUPS
+# Keep the existing history location, including on a fresh machine.
+[[ -d "$PERSONAL_FILES" ]] || mkdir -p "$PERSONAL_FILES"
+setopt HIST_IGNORE_ALL_DUPS HIST_FIND_NO_DUPS
 
-# Add Starship prompt
-export STARSHIP_CONFIG=$HOME/.config/starship/starship.toml
-eval "$(starship init zsh)"
-eval "$(zoxide init zsh)"
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-
-# Initialize zsh completion before loading CLI completions.
+# Initialize completions before plugins. Angular completion loads only on demand.
 autoload -Uz compinit
 compinit
+_ang_completion() {
+  unfunction _ang_completion
+  if (( $+commands[ng] )); then
+    source <(ng completion script)
+    local handler=${_comps[ng]:-}
+    [[ -n $handler && $handler != _ang_completion ]] && "$handler" "$@"
+  fi
+}
+compdef _ang_completion ng
 
-# Load Angular CLI autocompletion.
-source <(ng completion script)
-# The following lines have been added by Docker Desktop to enable Docker CLI completions.
-#fpath=(/Users/Roman.Csandl-Eriksen/.docker/completions $fpath)
-#autoload -Uz compinit
-#compinit
-# End of Docker CLI completions
-# Dev Env
-export JAVA_HOME=$(/usr/libexec/java_home -v 21)
-export PATH="$HOME/.local/bin:$PATH"
+# Zap is optional on hosts where the plugin manager has not been installed.
+if [[ -f "${XDG_DATA_HOME:-$HOME/.local/share}/zap/zap.zsh" ]]; then
+  source "${XDG_DATA_HOME:-$HOME/.local/share}/zap/zap.zsh"
+  if (( $+functions[plug] )); then
+    plug "zsh-users/zsh-autosuggestions"
+    plug "zsh-users/zsh-syntax-highlighting"
+  fi
+fi
+source "$ZSH/themes/zsh-highlight-catppuccin.zsh"
 
-# opencode
-export PATH=$HOME/.opencode/bin:$PATH
+# Project runtimes (including JAVA_HOME) come from mise, not a global Java pin.
+if (( $+commands[mise] )); then
+  eval "$(mise activate zsh)"
+fi
+export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
+(( $+commands[starship] )) && eval "$(starship init zsh)"
+(( $+commands[zoxide] )) && eval "$(zoxide init zsh)"
+# Preserve the existing fzf installation; Homebrew fzf is the fallback.
+if [[ -f "$HOME/.fzf.zsh" ]]; then
+  source "$HOME/.fzf.zsh"
+elif (( $+commands[fzf] )); then
+  eval "$(fzf --zsh)"
+fi
