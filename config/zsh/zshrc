@@ -33,6 +33,10 @@ eval "$(zoxide init zsh)"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 
+# Initialize zsh completion before loading CLI completions.
+autoload -Uz compinit
+compinit
+
 # Load Angular CLI autocompletion.
 source <(ng completion script)
 # The following lines have been added by Docker Desktop to enable Docker CLI completions.
