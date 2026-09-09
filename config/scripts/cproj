@@ -4,17 +4,44 @@ emulate -L zsh
 setopt pipefail
 
 usage() {
-  print 'Usage: cproj [--new] [--agent codex|claude|opencode|COMMAND] [--root PATH] [--list] [--dry-run] [PROJECT]'
-  print 'Without PROJECT, choose a Git repository using fzf. Default root: ~/diraigent.'
+  print 'Usage: cproj [--new] [--sync-sidebar] [--agent codex|claude|opencode|COMMAND] [--root PATH] [--list] [--dry-run] [PROJECT]'
+  print 'Without PROJECT, choose a Git repository using fzf. Default root: ~/Developer (overridable in private config).'
   print 'Focuses an existing project workspace across windows; --new always creates another.'
+  print "Example: cproj --agent 'codex resume' ."
+  print '--sync-sidebar groups/colors existing local workspaces and migrates cproj labels.'
 }
 
-agent=${CPROJ_AGENT:-codex}
-root=${CPROJ_ROOT:-$HOME/diraigent}
+# Private settings are optional; no project names or paths belong in this script.
+config_file=${CPROJ_CONFIG:-${PERSONAL_FILES:-$HOME/.personal-files}/cproj.json}
+settings='{}'
+if [[ -f $config_file ]]; then
+  settings=$(jq -ce '
+    type == "object" and
+    ((.root // "") | type == "string") and
+    ((.agent // "") | type == "string") and
+    ((.groups // []) | type == "array" and all(.[];
+      (.path | type == "string" and length > 0) and
+      (.name | type == "string" and length > 0) and
+      (.color | type == "string" and test("^#[0-9a-fA-F]{6}$")) and
+      ((.root // .path) | type == "string" and length > 0)))
+    ' "$config_file") || { print -u2 -- "Invalid cproj config: $config_file"; exit 1; }
+  [[ $settings == true ]] || { print -u2 -- "Invalid cproj config: $config_file"; exit 1; }
+  settings=$(cat "$config_file")
+fi
+expand_home() {
+  local value=$1
+  if [[ $value == '~' ]]; then print -r -- "$HOME"
+  elif [[ $value == '~/'* ]]; then print -r -- "$HOME/${value#\~/}"
+  else print -r -- "$value"; fi
+}
+agent=${CPROJ_AGENT:-$(print -r -- "$settings" | jq -r '.agent // "codex"')}
+root=${CPROJ_ROOT:-$(print -r -- "$settings" | jq -r '.root // "~/Developer"')}
+root=$(expand_home "$root")
 project=''
 list_only=0
 dry_run=0
 force_new=0
+sync_sidebar=0
 while (( $# )); do
   case "$1" in
     --agent|--root)
@@ -23,6 +50,7 @@ while (( $# )); do
       shift 2 ;;
     --list) list_only=1; shift ;;
     --new) force_new=1; shift ;;
+    --sync-sidebar) sync_sidebar=1; shift ;;
     --dry-run) dry_run=1; shift ;;
     -h|--help) usage; exit 0 ;;
     --) shift; (( $# == 1 )) || { usage >&2; exit 2; }; project=$1; shift ;;
@@ -31,7 +59,12 @@ while (( $# )); do
   esac
 done
 
-if [[ -z $project ]] || (( list_only )); then
+if (( sync_sidebar && (dry_run || force_new || list_only) )); then
+  print -u2 '--sync-sidebar cannot be combined with --dry-run, --new, or --list.'
+  exit 2
+fi
+
+if (( ! sync_sidebar )) && { [[ -z $project ]] || (( list_only )); }; then
   [[ -d $root ]] || { print -u2 -- "Project root does not exist: $root"; exit 1; }
   (( $+commands[fd] )) || { print -u2 'Install fd with brew install fd'; exit 1; }
   # .git can be a directory or a worktree file. Prune matched metadata directories.
@@ -46,16 +79,89 @@ if [[ -z $project ]] || (( list_only )); then
     --height=80% --layout=reverse --border --no-multi) || exit 0
 fi
 
+if (( ! sync_sidebar )); then
 [[ -d $project ]] || { print -u2 -- "Project directory does not exist: $project"; exit 1; }
 project=${project:A}
+fi
 for tool in jq cmux; do
   command -v "$tool" >/dev/null || { print -u2 -- "Required command not found: $tool"; exit 1; }
 done
 
-# The description is part of cmux's saved workspace metadata. Unlike a pane's
-# cwd, it remains stable while navigating. No parallel state file is necessary.
+# One atomic record per workspace UUID avoids concurrent launches overwriting
+# each other's state. Records survive cmux restarts and are matched only to live IDs.
+state_dir=${XDG_STATE_HOME:-$HOME/.local/state}/cproj/workspaces
+read_registry() {
+  local files=("$state_dir"/*.json(N))
+  if (( ${#files} )); then
+    jq -se 'map({key:.id,value:.project}) | from_entries' "${files[@]}"
+  else
+    print '{}'
+  fi
+}
+remember_project() {
+  local id=$1 directory=$2 tmp
+  [[ $id != *[^a-zA-Z0-9-]* && -n $id ]] || return 1
+  mkdir -p "$state_dir" || return 1
+  tmp=$(mktemp "$state_dir/.record.XXXXXXXX") || return 1
+  jq -n --arg id "$id" --arg project "$directory" '{id:$id,project:$project}' > "$tmp" || return 1
+  mv -- "$tmp" "$state_dir/$id.json"
+}
+# Longest directory-prefix match wins. Sibling names are not prefix matches.
+project_family() {
+  family='' color='' family_root=''
+  local entry prefix match_length=0
+  while IFS= read -r entry; do
+    prefix=$(expand_home "$(print -r -- "$entry" | jq -r '.path')") || return 1
+    prefix=${prefix:A}
+    if [[ "$1/" == "$prefix/"* ]] && (( ${#prefix} > match_length )); then
+      match_length=${#prefix}
+      family=$(print -r -- "$entry" | jq -r '.name') || return 1
+      color=$(print -r -- "$entry" | jq -r '.color') || return 1
+      family_root=$(expand_home "$(print -r -- "$entry" | jq -r '.root // .path')") || return 1
+    fi
+  done < <(print -r -- "$settings" | jq -c '.groups // [] | .[]')
+}
+style_workspace() {
+  local record=$1 directory=$2 managed=$3
+  local id ref window description title groups group family color family_root anchor
+  id=$(print -r -- "$record" | jq -er '.id') || return 1
+  ref=$(print -r -- "$record" | jq -er '.ref // .id') || return 1
+  window=$(print -r -- "$record" | jq -er '.cproj_window') || return 1
+  description=$(print -r -- "$record" | jq -r '.description // ""') || return 1
+  if [[ $managed == yes ]]; then
+    # Save identity before removing its old visible representation.
+    remember_project "$id" "$directory" || return 1
+    title=$(print -r -- "$record" | jq -r --arg fallback "${directory:t}" '.custom_title // .title // $fallback') || return 1
+    if [[ $title != '⌘ '* ]]; then
+      cmux workspace-action --action rename --workspace "$id" --window "$window" --title "⌘ $title" >/dev/null || return 1
+    fi
+    if [[ $description == '⌘' || $description == cproj:/* ]]; then
+      cmux workspace-action --action clear-description --workspace "$id" --window "$window" >/dev/null || return 1
+    fi
+  fi
+  project_family "$directory" || return 1
+  [[ -n $family ]] || return 0
+  cmux workspace-action --action set-color --workspace "$id" --window "$window" --color "$color" >/dev/null || return 1
+  groups=$(cmux --json workspace-group list --window "$window") || return 1
+  group=$(print -r -- "$groups" | jq -r --arg name "$family" '.groups[] | select(.name==$name) | .ref' | head -n 1) || return 1
+  if [[ -z $group ]]; then
+    group=$(cmux --json workspace-group create --window "$window" --name "$family" --cwd "$family_root" --from "$id" | jq -er '.group.ref') || return 1
+  elif ! print -r -- "$groups" | jq -e --arg group "$group" --arg ref "$ref" '.groups[] | select(.ref==$group) | .member_workspace_refs | index($ref) != null' >/dev/null; then
+    cmux workspace-group add --window "$window" --group "$group" --workspace "$id" >/dev/null || return 1
+  fi
+  cmux workspace-group set-color "$group" --window "$window" --hex "$color" >/dev/null || return 1
+  cmux workspace-group set-icon "$group" --window "$window" --symbol folder.fill >/dev/null || return 1
+  if [[ ${4:-} == top ]]; then
+    groups=$(cmux --json workspace-group list --window "$window") || return 1
+    anchor=$(print -r -- "$groups" | jq -er --arg group "$group" '.groups[] | select(.ref==$group) | .anchor_workspace_ref') || return 1
+    [[ $ref == $anchor ]] || cmux reorder-workspace --workspace "$id" --window "$window" --after "$anchor" >/dev/null || return 1
+  fi
+  return 0
+}
+
+registry=$(read_registry) || exit 1
 project_marker="cproj:$project"
-if (( ! force_new && ! dry_run )); then
+if (( sync_sidebar || (! force_new && ! dry_run) )); then
   tree=$(cmux --json tree --all) || exit 1
   windows=$(print -r -- "$tree" | jq -er '.windows | map(.ref) | .[]') || {
     print -u2 'Could not read cmux windows; refusing to create a duplicate.'
@@ -69,22 +175,31 @@ if (( ! force_new && ! dry_run )); then
     workspace_data=$(jq -nc --argjson old "$workspace_data" --argjson entries "$entries" \
       '$old + $entries') || exit 1
   done
-  existing=$(print -r -- "$workspace_data" | jq -c --arg marker "$project_marker" --arg cwd "$project" '
+  if (( sync_sidebar )); then
+    while IFS= read -r record; do
+      directory=$(print -r -- "$record" | jq -r --argjson saved "$registry" '$saved[.id] // (if (.description // "" | startswith("cproj:/")) then .description[6:] else .current_directory end)') || exit 1
+      managed=$(print -r -- "$record" | jq -r --argjson saved "$registry" 'if $saved[.id] != null or (.description // "" | startswith("cproj:/")) then "yes" else "no" end') || exit 1
+      style_workspace "$record" "$directory" "$managed" || exit 1
+    done < <(print -r -- "$workspace_data" | jq -c '.[] | select(.remote.enabled != true)')
+    selected=$(print -r -- "$workspace_data" | jq -c '.[] | select(.selected)')
+    for record in ${(f)selected}; do
+      cmux select-workspace --workspace "$(print -r -- "$record" | jq -r .id)" --window "$(print -r -- "$record" | jq -r .cproj_window)" >/dev/null || exit 1
+    done
+    print 'Sidebar synchronized.'
+    exit 0
+  fi
+  existing=$(print -r -- "$workspace_data" | jq -c --arg marker "$project_marker" --arg cwd "$project" --argjson saved "$registry" '
     [.[] | select(.remote.enabled != true) |
-      select(.description == $marker or
-        ((.description == null or .description == "") and .current_directory == $cwd))]
-    | sort_by([if .description == $marker then 0 else 1 end,
+      select($saved[.id] == $cwd or .description == $marker or
+        ($saved[.id] == null and (.description == null or .description == "") and .current_directory == $cwd))]
+    | sort_by([if $saved[.id] == $cwd or .description == $marker then 0 else 1 end,
                if .has_custom_title then 0 else 1 end,
                if .selected then 0 else 1 end])
     | .[0] // empty') || exit 1
   if [[ -n $existing ]]; then
     workspace=$(print -r -- "$existing" | jq -er '.id') || exit 1
     window=$(print -r -- "$existing" | jq -er '.cproj_window') || exit 1
-    # Adopt an older workspace once by saving its root, then only focus it.
-    if [[ $(print -r -- "$existing" | jq -r '.description // ""') != "$project_marker" ]]; then
-      cmux workspace-action --action set-description --workspace "$workspace" \
-        --window "$window" --description "$project_marker" || exit 1
-    fi
+    style_workspace "$existing" "$project" yes || exit 1
     cmux select-workspace --workspace "$workspace" --window "$window" || exit 1
     cmux focus-window --window "$window"
     exit $?
@@ -92,12 +207,17 @@ if (( ! force_new && ! dry_run )); then
 fi
 
 # Reusing a workspace does not require the original agent/editor on PATH.
-for tool in nvim "$agent"; do
+# Split shell-style quoted arguments, then quote each word again for execution.
+# Do not evaluate substitutions, pipelines, or other shell code in --agent.
+agent_words=(${(z)agent})
+agent_words=("${(@Q)agent_words}")
+(( ${#agent_words} )) || { print -u2 'Agent command must not be empty.'; exit 2; }
+for tool in nvim "${agent_words[1]}"; do
   command -v "$tool" >/dev/null || { print -u2 -- "Required command not found: $tool"; exit 1; }
 done
 
 # Each pane changes directory explicitly; a failed cd never launches the tool.
-agent_command="cd -- ${(q)project} && ${(q)agent}"
+agent_command="cd -- ${(q)project} && ${(j: :)${(@q)agent_words}}"
 editor_command="cd -- ${(q)project} && nvim"
 shell_command="cd -- ${(q)project}"
 layout=$(jq -nc --arg agent "$agent_command" --arg editor "$editor_command" \
@@ -115,5 +235,13 @@ if (( dry_run )); then
     '{name:$name,cwd:$cwd,layout:$layout}'
   exit $?
 fi
-cmux new-workspace --name "${project:t}" --description "$project_marker" \
-  --cwd "$project" --layout "$layout" --focus true
+created=$(cmux --json workspace create --name "${project:t}" --description "$project_marker" \
+  --cwd "$project" --layout "$layout" --focus true) || exit 1
+workspace_ref=$(print -r -- "$created" | jq -er '.workspace_ref') || exit 1
+window=$(print -r -- "$created" | jq -er '.window_ref') || exit 1
+record=$(cmux --json list-workspaces --window "$window" | jq -ce \
+  --arg ref "$workspace_ref" --arg window "$window" \
+  '.workspaces[] | select(.ref==$ref) | . + {cproj_window:$window}') || exit 1
+workspace=$(print -r -- "$record" | jq -er '.id') || exit 1
+style_workspace "$record" "$project" yes top || exit 1
+cmux select-workspace --workspace "$workspace" --window "$window"

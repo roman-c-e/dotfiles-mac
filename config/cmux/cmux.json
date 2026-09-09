@@ -3,7 +3,14 @@
   "schemaVersion": 1,
 
   "app": {
-    "appearance": "dark"
+    "appearance": "dark",
+    "reorderOnNotification": true
+  },
+  "sidebar": {
+    "showWorkspaceDescription": true
+  },
+  "workspaceGroups": {
+    "newWorkspacePlacement": "top"
   },
   "sidebarAppearance": {
     "matchTerminalBackground": true

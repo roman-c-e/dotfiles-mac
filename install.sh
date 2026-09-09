@@ -143,7 +143,3 @@ mas install 441258766
 
 # Start Services
 #brew services start sketchybar
-
-# NAV
-brew tap nais/tap
-brew install nais
