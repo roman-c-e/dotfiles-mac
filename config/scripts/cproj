@@ -230,6 +230,19 @@ layout=$(jq -nc --arg agent "$agent_command" --arg editor "$editor_command" \
     ]}
   ]}') || exit 1
 
+# Optional private layout uses the cmux layout schema with exact command tokens.
+# Commands are expanded only after project paths and agent arguments are quoted.
+if print -r -- "$settings" | jq -e '.layout != null' >/dev/null; then
+  layout=$(print -r -- "$settings" | jq -ce --arg agent "$agent_command" \
+    --arg editor "$editor_command" --arg shell "$shell_command" \
+    --arg git "$shell_command && lazygit" '
+    .layout | if type != "object" then error("layout must be an object") else . end |
+    walk(if type == "object" and has("command") then
+      .command = ({"{{agent}}":$agent,"{{editor}}":$editor,
+                   "{{shell}}":$shell,"{{git}}":$git}[.command] // .command)
+    else . end)') || exit 1
+fi
+
 if (( dry_run )); then
   jq -n --arg name "${project:t}" --arg cwd "$project" --argjson layout "$layout" \
     '{name:$name,cwd:$cwd,layout:$layout}'

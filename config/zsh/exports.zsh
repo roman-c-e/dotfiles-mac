@@ -5,7 +5,8 @@ export HISTSIZE=10000
 export SAVEHIST=10000
 
 export EDITOR="nvim"
-export BROWSER="safari"
+# Use the macOS default browser instead of forcing a particular application.
+[[ $OSTYPE == darwin* ]] && export BROWSER="open"
 
 # Path Variables
 export VISUAL='nvim'

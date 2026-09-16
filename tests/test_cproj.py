@@ -181,6 +181,22 @@ else:
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(any(c[0] == 'workspace-group' for c in calls))
 
+    def test_private_layout_expands_commands_and_preserves_names(self):
+        self.config.write_text(json.dumps({'layout': {'direction':'vertical', 'split':0.75,
+            'children':[{'pane':{'surfaces':[{'name':'Agent','command':'{{agent}}'}]}},
+                        {'pane':{'surfaces':[{'name':'Git','command':'{{git}}'},
+                                             {'name':'Logs','command':'{{shell}}'}]}}]}}))
+        result, calls = self.run_launcher({}, '--new')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        creation = next(c for c in calls if c[:2] == ['workspace','create'])
+        layout = json.loads(creation[creation.index('--layout')+1])
+        self.assertEqual(layout['split'], 0.75)
+        git, logs = layout['children'][1]['pane']['surfaces']
+        self.assertEqual(git['name'], 'Git')
+        self.assertTrue(git['command'].endswith('&& lazygit'))
+        self.assertNotIn('{{', json.dumps(layout))
+        self.assertNotIn('lazygit', logs['command'])
+
     def test_new_grouped_project_is_placed_after_anchor(self):
         self.project = self.root / 'Developer/product/example'
         self.project.mkdir(parents=True)
