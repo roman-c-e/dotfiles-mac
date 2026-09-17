@@ -73,7 +73,7 @@ omissions explicitly marked. Review these drafts for missing details.
 If the staging area or HEAD changes during generation or
 review, the script aborts so you can generate a fresh message.
 
-The `cproj` launcher opens a new cmux workspace with three panes: an AI CLI on
+By default, `cproj` opens a new cmux workspace with three panes: an AI CLI on
 the left, Neovim at the upper right, and a shell for builds/tests below it.
 Run it from cmux while the app is open:
 
@@ -144,6 +144,16 @@ New `cproj` workspaces appear directly below their group's header. Headers are
 terminal workspaces at the configured group root. Matching groups are reused by
 name within each window. Group colors/icons persist in cmux's local session state.
 Keep work-only Brewfiles in your private repository as well.
+
+The private config can also contain a `layout` object using cmux's workspace
+layout schema. Terminal `name` fields set stable tab labels. Exact `command`
+values `{{agent}}`, `{{editor}}`, `{{git}}`, and `{{shell}}` are expanded into
+commands that first change to the selected project directory. `{{git}}` runs
+lazygit; `{{shell}}` leaves an interactive shell ready for commands or logs.
+Other command strings are passed through as configured.
+Use `cproj --dry-run .` to inspect the result before opening a new workspace.
+Custom layouts apply only when creating workspaces; reusing a workspace never
+replaces or rearranges its running terminals.
 
 Run `cproj --sync-sidebar` to apply the grouping/colors to existing local
 workspaces and migrate old cproj descriptions without restarting their programs.

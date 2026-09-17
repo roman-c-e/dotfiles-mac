@@ -35,10 +35,12 @@ lsp.setup()
 ---
 -- Tree Sitter
 --
+-- Missing build tools must not turn opening a file into an installation error.
+local can_install_parsers = vim.fn.executable('tree-sitter') == 1
 require'nvim-treesitter.configs'.setup {
-  ensure_installed = { "c", "lua", "vim", "vimdoc", "query"},
+  ensure_installed = can_install_parsers and { "c", "lua", "vim", "vimdoc", "query"} or {},
   sync_install = false,
-  auto_install = true,
+  auto_install = can_install_parsers,
   ignore_install = {},
 
   highlight = {
@@ -160,4 +162,3 @@ vim.api.nvim_create_autocmd("VimEnter", {
 })
 
 -- Other tabs/buffers keep their focus. Use <leader>tr to toggle the file tree.
-
