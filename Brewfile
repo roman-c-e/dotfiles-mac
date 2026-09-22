@@ -21,6 +21,7 @@ brew "yazi"
 # Editing and Git (Neovim configuration is managed separately)
 brew "neovim"
 brew "tree-sitter-cli"
+brew "python-lsp-server"
 brew "git"
 brew "gh"
 brew "git-filter-repo"

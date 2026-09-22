@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Generate from the index, review in an editor, then explicitly confirm a commit.
+# Generate from the index, review in the terminal, then commit or edit.
 emulate -L zsh
 setopt err_exit pipefail
 
@@ -8,7 +8,7 @@ case "${1:-}" in
   --draft-only) draft_only=1; shift ;;
   -h|--help)
     print 'Usage: ai-commit [--draft-only]'
-    print 'Drafts a staged-change commit message with Codex. Review, then type yes to commit.'
+    print 'Drafts a staged-change commit message with Codex. Enter commits; e edits; q cancels.'
     print 'Set AI_COMMIT_MODEL to override the Codex default model.'
     exit 0 ;;
 esac
@@ -112,23 +112,25 @@ if (( draft_only )); then
   exit 0
 fi
 
-editor_words=(${(z)${VISUAL:-${EDITOR:-nvim}}})
-editor_words=("${(@Q)editor_words}")
-if ! "${editor_words[@]}" "$message"; then
-  print -u2 'Editor cancelled or failed. Nothing committed.'
-  exit 1
-fi
-[[ -n $(tr -d '[:space:]' < "$message") ]] || {
-  print -u2 'Empty message. Nothing committed.'; exit 1
-}
-unchanged
 print '\nCommit message:'
 cat "$message"
 print ''
-read -r 'answer?Create this commit? Type yes to commit, or Enter to cancel: ' || exit 0
-if [[ $answer != yes ]]; then
-  print 'Cancelled. Staged changes are unchanged.'
-  exit 0
-fi
+read -r 'answer?Press Enter to commit, e to edit, or q to cancel: ' || exit 0
+case $answer in
+  ''|yes) ;;
+  e)
+    editor_words=(${(z)${VISUAL:-${EDITOR:-nvim}}})
+    editor_words=("${(@Q)editor_words}")
+    if ! "${editor_words[@]}" "$message"; then
+      print -u2 'Editor cancelled or failed. Nothing committed.'
+      exit 1
+    fi
+    [[ -n $(tr -d '[:space:]' < "$message") ]] || {
+      print -u2 'Empty message. Nothing committed.'; exit 1
+    } ;;
+  *)
+    print 'Cancelled. Staged changes are unchanged.'
+    exit 0 ;;
+esac
 unchanged
 git commit --file "$message"

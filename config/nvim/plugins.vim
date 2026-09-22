@@ -12,6 +12,7 @@ call plug#begin()
   Plug 'catppuccin/nvim', { 'as': 'catppuccin' }
 
   Plug 'nvim-lualine/lualine.nvim'
+  Plug 'nvim-tree/nvim-web-devicons'
   Plug 'norcalli/nvim-colorizer.lua'
   Plug 'ryanoasis/vim-devicons' " Icons
   Plug 'tiagofumo/vim-nerdtree-syntax-highlight'
@@ -19,6 +20,7 @@ call plug#begin()
   " Tools
   Plug 'tpope/vim-fugitive' " Git
   Plug 'lewis6991/gitsigns.nvim'
+  Plug 'dlyongemallo/diffview-plus.nvim'
 
   Plug 'preservim/nerdtree'
   " Git changes are shown by gitsigns; the old NERDTree Git plugin generates
@@ -34,7 +36,7 @@ call plug#begin()
   Plug 'junegunn/fzf.vim'
   " Use ripgrep to find string in project files, and put results in the quickfix window
 Plug 'jremmen/vim-ripgrep'
-  Plug 'nvim-telescope/telescope.nvim', { 'tag': '0.1.2' }
+  Plug 'nvim-telescope/telescope.nvim', { 'tag': 'v0.2.2' }
 
   " LSP Support
   Plug 'neovim/nvim-lspconfig'             " Required
@@ -67,7 +69,7 @@ Plug 'nvim-lua/plenary.nvim' " Lua functions
 "Plug 'sheerun/vim-polyglot'
   Plug 'jiangmiao/auto-pairs'
   
-  Plug 'nvim-treesitter/nvim-treesitter' 
+  Plug 'nvim-treesitter/nvim-treesitter', { 'branch': 'main' }
   "Helps toggle code comments in various languages
 "Plug 'tomtom/tcomment_vim'
 

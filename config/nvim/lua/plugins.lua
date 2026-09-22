@@ -11,44 +11,51 @@ lsp.on_attach(function(client, bufnr)
 end)
 
 -- (Optional) Configure lua language server for neovim
-require('lspconfig').lua_ls.setup(lsp.nvim_lua_ls())
-require('lspconfig').pylsp.setup({
-  settings = {
-    pylsp = {
-      configurationSources = {"flake8"},
-        plugins = {
-          jedi_completion = {
-            include_params = true  -- this line enables snippets
+local lspconfig = require('lspconfig')
+
+if vim.fn.executable('lua-language-server') == 1 then
+  lspconfig.lua_ls.setup(lsp.nvim_lua_ls())
+end
+
+if vim.fn.executable('pylsp') == 1 then
+  lspconfig.pylsp.setup({
+    settings = {
+      pylsp = {
+        configurationSources = {"flake8"},
+          plugins = {
+            jedi_completion = {
+              include_params = true  -- this line enables snippets
+            },
           },
-        },
+      },
     },
-  },
-  capabilities = capabilities,
-})
-require('lspconfig').elixirls.setup{
-  cmd = {"elixir-ls"},
-  capabilities = capabilities
-}
+    capabilities = capabilities,
+  })
+end
+
+if vim.fn.executable('elixir-ls') == 1 then
+  lspconfig.elixirls.setup({
+    cmd = {"elixir-ls"},
+    capabilities = capabilities,
+  })
+end
 
 lsp.setup()
 
 ---
 -- Tree Sitter
 --
--- Missing build tools must not turn opening a file into an installation error.
-local can_install_parsers = vim.fn.executable('tree-sitter') == 1
-require'nvim-treesitter.configs'.setup {
-  ensure_installed = can_install_parsers and { "c", "lua", "vim", "vimdoc", "query"} or {},
-  sync_install = false,
-  auto_install = can_install_parsers,
-  ignore_install = {},
-
-  highlight = {
-    enable = true,
-    disable = {},
-    additional_vim_regex_highlighting = false,
-  },
-}
+require('nvim-treesitter').setup({})
+-- Neovim provides highlighting; only start it when a parser is installed.
+-- This keeps a fresh remote machine usable before running :TSInstall.
+vim.api.nvim_create_autocmd('FileType', {
+  callback = function(args)
+    local lang = vim.treesitter.language.get_lang(vim.bo[args.buf].filetype)
+    if lang and pcall(vim.treesitter.get_parser, args.buf, lang) then
+      pcall(vim.treesitter.start, args.buf, lang)
+    end
+  end,
+})
 
 ---
 -- CMP
@@ -78,7 +85,16 @@ require('catppuccin').setup {
 					mantle = "#000000",
 					crust = "#000000",
 				},
-			}
+			},
+  -- Keep diffs easy to scan against the custom pure-black background.
+  custom_highlights = function()
+    return {
+      DiffAdd = { bg = "#17351f" },
+      DiffDelete = { bg = "#3b1f27" },
+      DiffChange = { bg = "#1d2c45" },
+      DiffText = { bg = "#35517a", bold = true },
+    }
+  end,
 }
 
 ---
@@ -143,6 +159,41 @@ require('lualine').setup {
 -- Misc
 ---
 require('gitsigns').setup()
+
+require('diffview').setup({
+  enhanced_diff_hl = true,
+  diffopt = { algorithm = "histogram" },
+  clean_up_buffers = true,
+  view = {
+    default = {
+      layout = "diff1_inline",
+      winbar_info = true,
+    },
+    file_history = {
+      layout = "diff1_inline",
+      winbar_info = true,
+    },
+    cycle_layouts = {
+      default = { "diff1_inline", "diff2_horizontal", "diff2_vertical" },
+    },
+    inline = {
+      style = "unified",
+      deletion_highlight = "full_width",
+      deletion_treesitter = true,
+    },
+  },
+  file_panel = {
+    listing_style = "tree",
+    win_config = { position = "left", width = 35 },
+  },
+  hooks = {
+    diff_buf_read = function()
+      vim.opt_local.wrap = false
+      vim.opt_local.cursorline = false
+      vim.opt_local.colorcolumn = ""
+    end,
+  },
+})
 
 vim.g["netrw_banner"] = 0
 vim.g["netrw_liststyle"] = 3

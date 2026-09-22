@@ -12,6 +12,10 @@ vim.keymap.set('n', '<leader>ss', ":w<CR>", opt)
 vim.keymap.set('n', '<leader>sx', ":wq<CR>", opt)
 -- Tools
 vim.keymap.set('n', '<leader>gs', vim.cmd.Git, opt)
+vim.keymap.set('n', '<leader>gd', '<cmd>DiffviewToggle<CR>', { desc = 'Toggle Git diff' })
+vim.keymap.set('n', '<leader>gh', '<cmd>DiffviewFileHistory %<CR>', { desc = 'Git history for current file' })
+vim.keymap.set('n', '<leader>gH', '<cmd>DiffviewFileHistory<CR>', { desc = 'Git history for repository' })
+vim.keymap.set('n', '<leader>gq', '<cmd>DiffviewClose<CR>', { desc = 'Close Git diff' })
 vim.keymap.set('n', '<leader>tr', vim.cmd.NERDTreeToggle, opt)
 
 -- move lines

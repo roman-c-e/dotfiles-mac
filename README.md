@@ -48,17 +48,22 @@ remove packages belonging to other profiles or installed separately.
 Open a new terminal to pick up the shell changes. `EDITOR` and `VISUAL` use
 Neovim; `lg` opens lazygit with the repo-managed Mocha theme. `yazi` is a terminal
 file browser with previews, useful for navigating files and opening them in Neovim.
+In Neovim, `Space f f` filters file names and paths; `Space f g` searches text
+inside project files. On a new machine, run `:PlugInstall` and then
+`:TSInstall bash c dockerfile gitignore json lua markdown python query requirements ruby vim vimdoc`
+once to install syntax parsers for the languages used by this configuration.
 
 ### AI-assisted commit messages
 
 In lazygit's **Files** panel, stage the desired files/hunks and press **Shift+G**.
 The `ai-commit` script sends the staged diff to your authenticated Codex CLI,
-opens the draft in `$VISUAL`/`$EDITOR` (Neovim by default), then displays it and
-asks you to type `yes` before committing. Enter cancels; `:cq` in Neovim aborts.
+then displays the draft. Press Enter to commit, type `e` to edit in
+`$VISUAL`/`$EDITOR` (Neovim by default), or `q` to cancel. Saving an edited
+message commits it; `:cq` in Neovim aborts.
 It never stages files or pushes. Normal Git commit hooks and signing still apply.
 
 ```sh
-ai-commit               # Generate, edit, and confirm
+ai-commit               # Generate and review; Enter commits, e edits, q cancels
 ai-commit --draft-only  # Print a draft without opening an editor or committing
 ```
 

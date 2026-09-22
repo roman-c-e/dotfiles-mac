@@ -75,7 +75,8 @@ else:
         self.fixture.write_text(json.dumps({"windows": windows, "fail": fail}))
         result = subprocess.run([str(LAUNCHER), *args, str(project or self.project)],
                                 env=self.env, capture_output=True, text=True)
-        calls = [json.loads(line) for line in self.log.read_text().splitlines()]
+        calls = ([json.loads(line) for line in self.log.read_text().splitlines()]
+                 if self.log.exists() else [])
         return result, calls
 
     def test_saved_identity_survives_rename_cwd_change_and_window_change(self):
@@ -173,6 +174,20 @@ else:
         creation = next(c for c in calls if c[:2] == ['workspace', 'create'])
         layout = json.loads(creation[creation.index('--layout') + 1])
         self.assertIn('codex resume --last', layout['children'][0]['pane']['surfaces'][0]['command'])
+
+    def test_resume_uses_private_resume_agent(self):
+        self.config.write_text(json.dumps({'agent': 'codex', 'resumeAgent': 'codex resume --last'}))
+        result, calls = self.run_launcher({}, '--new', '--resume')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        creation = next(c for c in calls if c[:2] == ['workspace', 'create'])
+        layout = json.loads(creation[creation.index('--layout') + 1])
+        self.assertIn('codex resume --last', layout['children'][0]['pane']['surfaces'][0]['command'])
+
+    def test_resume_and_agent_are_mutually_exclusive(self):
+        result, calls = self.run_launcher({}, '--new', '--resume', '--agent', 'codex')
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('cannot be combined', result.stderr)
+        self.assertEqual(calls, [])
 
     def test_sibling_prefix_does_not_match_group(self):
         self.project = self.root / 'Developer/work-other/sample'

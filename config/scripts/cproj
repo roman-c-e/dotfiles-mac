@@ -4,11 +4,11 @@ emulate -L zsh
 setopt pipefail
 
 usage() {
-  print 'Usage: cproj [--new] [--sync-sidebar] [--agent codex|claude|opencode|COMMAND] [--root PATH] [--list] [--dry-run] [PROJECT]'
-  print 'Without PROJECT, choose a Git repository using fzf. Default root: ~/Developer (overridable in private config).'
-  print 'Focuses an existing project workspace across windows; --new always creates another.'
-  print "Example: cproj --agent 'codex resume' ."
-  print '--sync-sidebar groups/colors existing local workspaces and migrates cproj labels.'
+  print -r -- 'Usage: cproj [--new] [--resume] [--sync-sidebar] [--agent codex|claude|opencode|COMMAND] [--root PATH] [--list] [--dry-run] [PROJECT]'
+  print -r -- 'Without PROJECT, choose a Git repository using fzf. Default root: ~/Developer (overridable in private config).'
+  print -r -- 'Focuses an existing project workspace across windows; --new always creates another.'
+  print -r -- 'Use --resume to resume a Codex session when a new workspace is created.'
+  print -r -- '--sync-sidebar groups/colors existing local workspaces and migrates cproj labels.'
 }
 
 # Private settings are optional; no project names or paths belong in this script.
@@ -19,6 +19,7 @@ if [[ -f $config_file ]]; then
     type == "object" and
     ((.root // "") | type == "string") and
     ((.agent // "") | type == "string") and
+    ((.resumeAgent // "") | type == "string") and
     ((.groups // []) | type == "array" and all(.[];
       (.path | type == "string" and length > 0) and
       (.name | type == "string" and length > 0) and
@@ -35,6 +36,7 @@ expand_home() {
   else print -r -- "$value"; fi
 }
 agent=${CPROJ_AGENT:-$(print -r -- "$settings" | jq -r '.agent // "codex"')}
+resume_agent=$(print -r -- "$settings" | jq -r '.resumeAgent // "codex resume"')
 root=${CPROJ_ROOT:-$(print -r -- "$settings" | jq -r '.root // "~/Developer"')}
 root=$(expand_home "$root")
 project=''
@@ -42,14 +44,17 @@ list_only=0
 dry_run=0
 force_new=0
 sync_sidebar=0
+resume=0
+agent_option=0
 while (( $# )); do
   case "$1" in
     --agent|--root)
       (( $# >= 2 )) || { usage >&2; exit 2; }
-      if [[ $1 == --agent ]]; then agent=$2; else root=$2; fi
+      if [[ $1 == --agent ]]; then agent=$2; agent_option=1; else root=$2; fi
       shift 2 ;;
     --list) list_only=1; shift ;;
     --new) force_new=1; shift ;;
+    --resume) resume=1; shift ;;
     --sync-sidebar) sync_sidebar=1; shift ;;
     --dry-run) dry_run=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -59,8 +64,14 @@ while (( $# )); do
   esac
 done
 
-if (( sync_sidebar && (dry_run || force_new || list_only) )); then
-  print -u2 '--sync-sidebar cannot be combined with --dry-run, --new, or --list.'
+if (( resume && agent_option )); then
+  print -u2 -- '--resume cannot be combined with --agent.'
+  exit 2
+fi
+(( resume )) && agent=$resume_agent
+
+if (( sync_sidebar && (dry_run || force_new || list_only || resume) )); then
+  print -u2 -- '--sync-sidebar cannot be combined with --dry-run, --new, --resume, or --list.'
   exit 2
 fi
 

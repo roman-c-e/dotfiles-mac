@@ -19,6 +19,6 @@ gui:
 customCommands:
   - key: "G"
     context: "files"
-    description: "Draft commit message with Codex, edit, then confirm"
+    description: "Draft commit with Codex; Enter accepts, e edits, q cancels"
     command: '"$HOME/.config/scripts/ai-commit"'
     output: terminal

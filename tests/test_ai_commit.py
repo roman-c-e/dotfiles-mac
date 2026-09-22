@@ -41,7 +41,11 @@ if os.environ.get('TEST_CHANGE_INDEX'):
 ''')
         fake.chmod(0o755)
         editor = self.root / "editor"
-        editor.write_text('#!/bin/sh\nexit "${TEST_EDITOR_EXIT:-0}"\n')
+        editor.write_text('#!/bin/sh\n'
+                          'if [ -n "${TEST_EDITOR_MESSAGE:-}" ]; then\n'
+                          '  printf "%s\\n" "$TEST_EDITOR_MESSAGE" > "$1"\n'
+                          'fi\n'
+                          'exit "${TEST_EDITOR_EXIT:-0}"\n')
         editor.chmod(0o755)
         self.env["VISUAL"] = str(editor)
 
@@ -81,7 +85,7 @@ if os.environ.get('TEST_CHANGE_INDEX'):
     def test_cancel_preserves_index(self):
         self.stage()
         before = self.git("write-tree")
-        result = self.run_script(answer="\n")
+        result = self.run_script(answer="q\n")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(before, self.git("write-tree"))
         self.assert_no_commit()
@@ -101,12 +105,18 @@ if os.environ.get('TEST_CHANGE_INDEX'):
         self.assertLess(len(prompt.encode()), 205000)
         self.assert_no_commit()
 
-    def test_yes_commits_only_staged_changes(self):
+    def test_enter_commits_only_staged_changes(self):
         self.stage()
-        result = self.run_script(answer="yes\n")
+        result = self.run_script(answer="\n")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.git("show", "HEAD:sample"), b"staged content\n")
         self.assertEqual((self.repo / "sample").read_text(), "unstaged content\n")
+
+    def test_edit_commits_reviewed_message_without_second_confirmation(self):
+        self.stage()
+        result = self.run_script(answer="e\n", TEST_EDITOR_MESSAGE="Use reviewed wording")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.git("log", "-1", "--format=%s").strip(), b"Use reviewed wording")
 
     def test_empty_or_failed_generation_never_commits(self):
         self.stage()
@@ -117,7 +127,7 @@ if os.environ.get('TEST_CHANGE_INDEX'):
 
     def test_editor_abort_never_commits(self):
         self.stage()
-        result = self.run_script(answer="yes\n", TEST_EDITOR_EXIT="1")
+        result = self.run_script(answer="e\n", TEST_EDITOR_EXIT="1")
         self.assertNotEqual(result.returncode, 0)
         self.assert_no_commit()
 
