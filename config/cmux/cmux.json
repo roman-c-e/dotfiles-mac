@@ -4,7 +4,7 @@
 
   "app": {
     "appearance": "dark",
-    "reorderOnNotification": true
+    "reorderOnNotification": false
   },
   "sidebar": {
     "showWorkspaceDescription": true

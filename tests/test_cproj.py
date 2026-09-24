@@ -36,20 +36,32 @@ if args[0] == 'tree':
 elif args[0] == 'list-workspaces':
     window = args[args.index('--window') + 1]
     print(json.dumps({'workspaces': data['windows'][window]}))
+elif args[0] == 'current-workspace':
+    print(json.dumps(data['current']))
 elif args[:2] == ['workspace', 'create']:
     data.setdefault('windows', {}).setdefault('window:1', []).append({
         'id': 'new-id', 'ref': 'workspace:new',
         'description': args[args.index('--description') + 1]})
+    if data.get('inherit_group'):
+        data['groups'][0]['member_workspace_refs'].append('workspace:new')
     pathlib.Path(os.environ['CPROJ_TEST_FIXTURE']).write_text(json.dumps(data))
     print(json.dumps({'workspace_ref': 'workspace:new', 'window_ref': 'window:1'}))
 elif args[:2] == ['workspace-group', 'list']:
     print(json.dumps({'groups': data.get('groups', [])}))
 elif args[:2] == ['workspace-group', 'create']:
-    group = {'ref': 'workspace_group:1', 'name': args[args.index('--name') + 1],
-             'anchor_workspace_ref': 'workspace:anchor', 'member_workspace_refs': ['workspace:new']}
-    data['groups'] = [group]
+    group = {'ref': 'workspace_group:2', 'name': args[args.index('--name') + 1],
+             'anchor_workspace_ref': 'workspace:new', 'member_workspace_refs': ['workspace:new']}
+    data.setdefault('groups', []).append(group)
     pathlib.Path(os.environ['CPROJ_TEST_FIXTURE']).write_text(json.dumps(data))
     print(json.dumps({'group': group}))
+elif args[:2] == ['workspace-group', 'remove']:
+    for group in data.get('groups', []):
+        group['member_workspace_refs'] = [ref for ref in group['member_workspace_refs'] if ref != 'workspace:new']
+    pathlib.Path(os.environ['CPROJ_TEST_FIXTURE']).write_text(json.dumps(data))
+elif args[:2] == ['workspace-group', 'add']:
+    group = next(group for group in data['groups'] if group['ref'] == args[args.index('--group') + 1])
+    group['member_workspace_refs'].append('workspace:new')
+    pathlib.Path(os.environ['CPROJ_TEST_FIXTURE']).write_text(json.dumps(data))
 else:
     print('OK')
 ''')
@@ -58,6 +70,9 @@ else:
             stub = self.root / name
             stub.write_text("#!/bin/sh\nexit 0\n")
             stub.chmod(0o755)
+        picker = self.root / 'fzf'
+        picker.write_text("#!/bin/sh\nhead -n 1\n")
+        picker.chmod(0o755)
         self.config = self.root / 'private-cproj.json'
         self.config.write_text(json.dumps({'groups': [
             {'path': '~/Developer/work', 'name': 'Work', 'color': '#fab387'},
@@ -71,9 +86,15 @@ else:
                     current_directory="/somewhere/else", remote={"enabled": False},
                     has_custom_title=True, selected=False, **changes)
 
-    def run_launcher(self, windows, *args, fail=False, project=None):
-        self.fixture.write_text(json.dumps({"windows": windows, "fail": fail}))
-        result = subprocess.run([str(LAUNCHER), *args, str(project or self.project)],
+    def run_launcher(self, windows, *args, fail=False, project=None, groups=None, inherit_group=False,
+                     include_project=True, current=None):
+        self.fixture.write_text(json.dumps({"windows": windows, "fail": fail,
+                                            "groups": groups or [], "inherit_group": inherit_group,
+                                            "current": current}))
+        command = [str(LAUNCHER), *args]
+        if include_project:
+            command.append(str(project or self.project))
+        result = subprocess.run(command,
                                 env=self.env, capture_output=True, text=True)
         calls = ([json.loads(line) for line in self.log.read_text().splitlines()]
                  if self.log.exists() else [])
@@ -130,16 +151,35 @@ else:
         self.assertFalse(any(c[:2] == ['workspace', 'create'] for c in calls))
         self.assertFalse(any('clear-description' in c or 'set-description' in c for c in calls))
 
-    def test_sync_groups_known_roots_and_keeps_non_cproj_descriptions(self):
+    def test_sync_leaves_non_cproj_workspace_alone(self):
         self.project = self.root / 'Developer/work/sample'
         self.project.mkdir(parents=True)
         workspace = self.workspace()
         workspace.update(description='Useful note', current_directory=str(self.project))
         result, calls = self.run_launcher({'window:1': [workspace]}, '--sync-sidebar')
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue(any(c[:2] == ['workspace-group', 'create'] for c in calls))
+        self.assertFalse(any(c[:2] in (['workspace-group', 'create'], ['workspace-group', 'add']) for c in calls))
         self.assertFalse(any('set-description' in c for c in calls))
         self.assertFalse((self.root / 'state/cproj/workspaces/saved-id.json').exists())
+
+    def test_sync_clears_legacy_anchor_color_but_preserves_other_colors(self):
+        root = self.root / 'Developer/work'
+        root.mkdir(parents=True)
+        anchor = {'id': 'anchor-id', 'ref': 'workspace:anchor', 'description': 'Work',
+                  'current_directory': str(root), 'custom_color': '#FAB387',
+                  'remote': {'enabled': False}, 'selected': False}
+        other = dict(anchor, id='other-id', ref='workspace:other',
+                     custom_color='#FF0000')
+        groups = [{'ref': 'workspace_group:1', 'name': 'Work',
+                   'anchor_workspace_ref': 'workspace:anchor',
+                   'member_workspace_refs': ['workspace:anchor', 'workspace:other']}]
+        result, calls = self.run_launcher({'window:1': [anchor, other]},
+                                          '--sync-sidebar', groups=groups)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        clears = [c for c in calls if c[:2] == ['workspace-action', '--action']
+                  and 'clear-color' in c]
+        self.assertEqual(len(clears), 1)
+        self.assertIn('anchor-id', clears[0])
 
     def test_migration_saves_identity_before_replacing_description(self):
         result, calls = self.run_launcher({'window:1': [self.workspace()]})
@@ -164,7 +204,7 @@ else:
         self.config.unlink()
         result, calls = self.run_launcher({}, '--new')
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertFalse(any(c[0] == 'workspace-group' for c in calls))
+        self.assertFalse(any(c[:2] in (['workspace-group', 'create'], ['workspace-group', 'add']) for c in calls))
 
     def test_private_agent_setting_is_used(self):
         self.config.write_text(json.dumps({'agent': 'codex resume --last'}))
@@ -194,7 +234,7 @@ else:
         self.project.mkdir(parents=True)
         result, calls = self.run_launcher({}, '--new')
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertFalse(any(c[0] == 'workspace-group' for c in calls))
+        self.assertFalse(any(c[:2] in (['workspace-group', 'create'], ['workspace-group', 'add']) for c in calls))
 
     def test_private_layout_expands_commands_and_preserves_names(self):
         self.config.write_text(json.dumps({'layout': {'direction':'vertical', 'split':0.75,
@@ -215,10 +255,59 @@ else:
     def test_new_grouped_project_is_placed_after_anchor(self):
         self.project = self.root / 'Developer/product/example'
         self.project.mkdir(parents=True)
-        result, calls = self.run_launcher({}, '--new')
+        groups = [{'ref': 'workspace_group:1', 'name': 'Product',
+                   'anchor_workspace_ref': 'workspace:anchor',
+                   'member_workspace_refs': ['workspace:anchor']}]
+        result, calls = self.run_launcher({}, '--new', groups=groups)
         self.assertEqual(result.returncode, 0, result.stderr)
         reorder = next(c for c in calls if c[0] == 'reorder-workspace')
         self.assertEqual(reorder[-2:], ['--after', 'workspace:anchor'])
+
+    def test_new_project_leaves_inherited_group_before_joining_its_own(self):
+        self.project = self.root / 'Developer/product/example'
+        self.project.mkdir(parents=True)
+        groups = [
+            {'ref': 'workspace_group:1', 'name': 'Work',
+             'anchor_workspace_ref': 'workspace:work',
+             'member_workspace_refs': ['workspace:work']},
+            {'ref': 'workspace_group:2', 'name': 'Product',
+             'anchor_workspace_ref': 'workspace:product',
+             'member_workspace_refs': ['workspace:product']}]
+        result, calls = self.run_launcher({}, '--new', groups=groups, inherit_group=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        remove = next(i for i, c in enumerate(calls) if c[:2] == ['workspace-group', 'remove'])
+        add = next(i for i, c in enumerate(calls) if c[:2] == ['workspace-group', 'add'])
+        self.assertLess(remove, add)
+        final = json.loads(self.fixture.read_text())['groups']
+        self.assertNotIn('workspace:new', final[0]['member_workspace_refs'])
+        self.assertIn('workspace:new', final[1]['member_workspace_refs'])
+
+    def test_park_current_workspace_saves_path_then_closes_exact_workspace(self):
+        current = {'window_ref': 'window:2',
+                   'workspace': {'id': 'saved-id', 'description': f'cproj:{self.project}'}}
+        result, calls = self.run_launcher({'window:2': [self.workspace()]}, '--park',
+                                          include_project=False, current=current)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(calls[-1], ['workspace', 'close', 'saved-id', '--window', 'window:2'])
+        saved = list((self.root / 'state/cproj/parked').glob('*.json'))
+        self.assertEqual(len(saved), 1)
+        self.assertEqual(json.loads(saved[0].read_text())['project'], str(self.project))
+
+    def test_cold_project_reopens_with_resume_and_leaves_cold_list(self):
+        first, _ = self.run_launcher({'window:1': [self.workspace()]}, '--park')
+        self.assertEqual(first.returncode, 0, first.stderr)
+        self.log.unlink()
+        listing, list_calls = self.run_launcher({'window:1': []}, '--cold', '--list',
+                                                include_project=False)
+        self.assertEqual(listing.returncode, 0, listing.stderr)
+        self.assertEqual(listing.stdout.strip(), str(self.project))
+        self.assertEqual(list_calls, [])
+        result, calls = self.run_launcher({'window:1': []}, '--cold', include_project=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        creation = next(c for c in calls if c[:2] == ['workspace', 'create'])
+        layout = json.loads(creation[creation.index('--layout') + 1])
+        self.assertIn('codex resume', layout['children'][0]['pane']['surfaces'][0]['command'])
+        self.assertEqual(list((self.root / 'state/cproj/parked').glob('*.json')), [])
 
     def test_connection_failure_does_not_create_duplicate(self):
         result, calls = self.run_launcher({}, fail=True)

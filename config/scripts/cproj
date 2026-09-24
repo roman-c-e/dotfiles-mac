@@ -4,11 +4,13 @@ emulate -L zsh
 setopt pipefail
 
 usage() {
-  print -r -- 'Usage: cproj [--new] [--resume] [--sync-sidebar] [--agent codex|claude|opencode|COMMAND] [--root PATH] [--list] [--dry-run] [PROJECT]'
+  print -r -- 'Usage: cproj [--new] [--resume] [--park|--cold] [--sync-sidebar] [--agent codex|claude|opencode|COMMAND] [--root PATH] [--list] [--dry-run] [PROJECT]'
   print -r -- 'Without PROJECT, choose a Git repository using fzf. Default root: ~/Developer (overridable in private config).'
   print -r -- 'Focuses an existing project workspace across windows; --new always creates another.'
   print -r -- 'Use --resume to resume a Codex session when a new workspace is created.'
-  print -r -- '--sync-sidebar groups/colors existing local workspaces and migrates cproj labels.'
+  print -r -- '--sync-sidebar repairs cproj workspace groups and migrates old labels.'
+  print -r -- '--park closes the current cproj workspace, keeping its project in a local cold list.'
+  print -r -- '--cold picks a parked project and reopens it with the configured resume agent.'
 }
 
 # Private settings are optional; no project names or paths belong in this script.
@@ -23,7 +25,7 @@ if [[ -f $config_file ]]; then
     ((.groups // []) | type == "array" and all(.[];
       (.path | type == "string" and length > 0) and
       (.name | type == "string" and length > 0) and
-      (.color | type == "string" and test("^#[0-9a-fA-F]{6}$")) and
+      ((.color // "#000000") | type == "string" and test("^#[0-9a-fA-F]{6}$")) and
       ((.root // .path) | type == "string" and length > 0)))
     ' "$config_file") || { print -u2 -- "Invalid cproj config: $config_file"; exit 1; }
   [[ $settings == true ]] || { print -u2 -- "Invalid cproj config: $config_file"; exit 1; }
@@ -45,6 +47,8 @@ dry_run=0
 force_new=0
 sync_sidebar=0
 resume=0
+park=0
+cold=0
 agent_option=0
 while (( $# )); do
   case "$1" in
@@ -55,6 +59,8 @@ while (( $# )); do
     --list) list_only=1; shift ;;
     --new) force_new=1; shift ;;
     --resume) resume=1; shift ;;
+    --park) park=1; shift ;;
+    --cold) cold=1; shift ;;
     --sync-sidebar) sync_sidebar=1; shift ;;
     --dry-run) dry_run=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -64,10 +70,23 @@ while (( $# )); do
   esac
 done
 
+if (( park + cold + sync_sidebar > 1 )); then
+  print -u2 -- '--park, --cold, and --sync-sidebar are mutually exclusive.'
+  exit 2
+fi
+if (( park && (dry_run || force_new || list_only || resume || agent_option) )); then
+  print -u2 -- '--park cannot be combined with --dry-run, --new, --list, --resume, or --agent.'
+  exit 2
+fi
+if (( cold && (dry_run || force_new) )); then
+  print -u2 -- '--cold cannot be combined with --dry-run or --new.'
+  exit 2
+fi
 if (( resume && agent_option )); then
   print -u2 -- '--resume cannot be combined with --agent.'
   exit 2
 fi
+(( cold && ! agent_option )) && resume=1
 (( resume )) && agent=$resume_agent
 
 if (( sync_sidebar && (dry_run || force_new || list_only || resume) )); then
@@ -75,7 +94,37 @@ if (( sync_sidebar && (dry_run || force_new || list_only || resume) )); then
   exit 2
 fi
 
-if (( ! sync_sidebar )) && { [[ -z $project ]] || (( list_only )); }; then
+cold_dir=${XDG_STATE_HOME:-$HOME/.local/state}/cproj/parked
+parked_file() {
+  local digest
+  digest=$(print -rn -- "$1" | shasum -a 256) || return 1
+  print -r -- "$cold_dir/${digest%% *}.json"
+}
+park_project() {
+  local directory=$1 id=$2 window=$3 file tmp
+  file=$(parked_file "$directory") || return 1
+  mkdir -p "$cold_dir" || return 1
+  tmp=$(mktemp "$cold_dir/.park.XXXXXXXX") || return 1
+  jq -n --arg project "$directory" '{project:$project}' > "$tmp" || return 1
+  mv -- "$tmp" "$file" || return 1
+  cmux workspace close "$id" --window "$window" || return 1
+  print -r -- "Parked: $directory"
+}
+if (( cold )); then
+  parked_files=("$cold_dir"/*.json(N))
+  if (( list_only )); then
+    (( ${#parked_files} )) && jq -r '.project' "${parked_files[@]}" | sort -u
+    exit 0
+  fi
+  if [[ -z $project ]]; then
+    (( ${#parked_files} )) || { print -u2 -- 'No parked projects.'; exit 1; }
+    (( $+commands[fzf] )) || { print -u2 'Install fzf with brew install fzf'; exit 1; }
+    project=$(jq -r '.project' "${parked_files[@]}" | sort -u | fzf --prompt='Cold project > ' \
+      --height=80% --layout=reverse --border --no-multi) || exit 0
+  fi
+fi
+
+if (( ! sync_sidebar && ! park && ! cold )) && { [[ -z $project ]] || (( list_only )); }; then
   [[ -d $root ]] || { print -u2 -- "Project root does not exist: $root"; exit 1; }
   (( $+commands[fd] )) || { print -u2 'Install fd with brew install fd'; exit 1; }
   # .git can be a directory or a worktree file. Prune matched metadata directories.
@@ -90,7 +139,7 @@ if (( ! sync_sidebar )) && { [[ -z $project ]] || (( list_only )); }; then
     --height=80% --layout=reverse --border --no-multi) || exit 0
 fi
 
-if (( ! sync_sidebar )); then
+if (( ! sync_sidebar && ! park )); then
 [[ -d $project ]] || { print -u2 -- "Project directory does not exist: $project"; exit 1; }
 project=${project:A}
 fi
@@ -127,14 +176,14 @@ project_family() {
     if [[ "$1/" == "$prefix/"* ]] && (( ${#prefix} > match_length )); then
       match_length=${#prefix}
       family=$(print -r -- "$entry" | jq -r '.name') || return 1
-      color=$(print -r -- "$entry" | jq -r '.color') || return 1
+      color=$(print -r -- "$entry" | jq -r '.color // ""') || return 1
       family_root=$(expand_home "$(print -r -- "$entry" | jq -r '.root // .path')") || return 1
     fi
   done < <(print -r -- "$settings" | jq -c '.groups // [] | .[]')
 }
 style_workspace() {
   local record=$1 directory=$2 managed=$3
-  local id ref window description title groups group family color family_root anchor
+  local id ref window description title groups group family color family_root anchor current_group current_anchor current_color group_color current_group_name
   id=$(print -r -- "$record" | jq -er '.id') || return 1
   ref=$(print -r -- "$record" | jq -er '.ref // .id') || return 1
   window=$(print -r -- "$record" | jq -er '.cproj_window') || return 1
@@ -150,17 +199,45 @@ style_workspace() {
       cmux workspace-action --action clear-description --workspace "$id" --window "$window" >/dev/null || return 1
     fi
   fi
-  project_family "$directory" || return 1
-  [[ -n $family ]] || return 0
-  cmux workspace-action --action set-color --workspace "$id" --window "$window" --color "$color" >/dev/null || return 1
   groups=$(cmux --json workspace-group list --window "$window") || return 1
+  current_group=$(print -r -- "$groups" | jq -r --arg ref "$ref" '.groups[] | select(.member_workspace_refs | index($ref) != null) | .ref' | head -n 1) || return 1
+  current_anchor=$(print -r -- "$groups" | jq -r --arg group "$current_group" '.groups[] | select(.ref==$group) | .anchor_workspace_ref') || return 1
+  current_color=$(print -r -- "$record" | jq -r '.custom_color // ""' | tr '[:upper:]' '[:lower:]') || return 1
+  if [[ $managed != yes ]]; then
+    # Earlier versions colored generated group anchors too. Clear only the
+    # matching family color; leave every other unowned workspace untouched.
+    if [[ -n $current_group && $ref == $current_anchor && -n $current_color ]]; then
+      current_group_name=$(print -r -- "$groups" | jq -r --arg group "$current_group" '.groups[] | select(.ref==$group) | .name') || return 1
+      if print -r -- "$settings" | jq -e --arg name "$current_group_name" --arg color "$current_color" '[.groups[]? | select(.name==$name) | .color? | ascii_downcase] | index($color) != null' >/dev/null; then
+        cmux workspace-action --action clear-color --workspace "$id" --window "$window" >/dev/null || return 1
+      fi
+    fi
+    return 0
+  fi
+  project_family "$directory" || return 1
   group=$(print -r -- "$groups" | jq -r --arg name "$family" '.groups[] | select(.name==$name) | .ref' | head -n 1) || return 1
+  if [[ -n $current_group && $current_group != $group ]]; then
+    if [[ $ref == $current_anchor ]]; then
+      print -u2 -- "Cannot move group anchor $ref automatically; move its group header manually."
+      return 1
+    fi
+    cmux workspace-group remove --window "$window" --workspace "$id" >/dev/null || return 1
+  fi
+  # Clear only colors from the former family palette; preserve user-assigned
+  # attention colors and notification indicators.
+  if [[ -n $current_color ]] && print -r -- "$settings" | jq -e --arg color "$current_color" '[.groups[]?.color? | ascii_downcase] | index($color) != null' >/dev/null; then
+    cmux workspace-action --action clear-color --workspace "$id" --window "$window" >/dev/null || return 1
+  fi
+  [[ -n $family ]] || return 0
   if [[ -z $group ]]; then
     group=$(cmux --json workspace-group create --window "$window" --name "$family" --cwd "$family_root" --from "$id" | jq -er '.group.ref') || return 1
-  elif ! print -r -- "$groups" | jq -e --arg group "$group" --arg ref "$ref" '.groups[] | select(.ref==$group) | .member_workspace_refs | index($ref) != null' >/dev/null; then
+  elif [[ $current_group != $group ]]; then
     cmux workspace-group add --window "$window" --group "$group" --workspace "$id" >/dev/null || return 1
   fi
-  cmux workspace-group set-color "$group" --window "$window" --hex "$color" >/dev/null || return 1
+  group_color=$(print -r -- "$groups" | jq -r --arg group "$group" '.groups[] | select(.ref==$group) | .custom_color // ""' | tr '[:upper:]' '[:lower:]') || return 1
+  if [[ -n $color && $group_color == ${color:l} ]]; then
+    cmux workspace-group set-color "$group" --window "$window" >/dev/null || return 1
+  fi
   cmux workspace-group set-icon "$group" --window "$window" --symbol folder.fill >/dev/null || return 1
   if [[ ${4:-} == top ]]; then
     groups=$(cmux --json workspace-group list --window "$window") || return 1
@@ -171,6 +248,21 @@ style_workspace() {
 }
 
 registry=$(read_registry) || exit 1
+if (( park )); then
+  if [[ -z $project ]]; then
+    current=$(cmux --json current-workspace) || exit 1
+    workspace=$(print -r -- "$current" | jq -er '.workspace.id') || exit 1
+    window=$(print -r -- "$current" | jq -er '.window_ref') || exit 1
+    project=$(print -r -- "$current" | jq -r --argjson saved "$registry" \
+      '$saved[.workspace.id] // (if (.workspace.description // "" | startswith("cproj:/")) then .workspace.description[6:] else "" end)') || exit 1
+    [[ -n $project ]] || { print -u2 -- 'Current workspace is not managed by cproj.'; exit 1; }
+    [[ -d $project ]] || { print -u2 -- "Project directory does not exist: $project"; exit 1; }
+    park_project "$project" "$workspace" "$window"
+    exit $?
+  fi
+  [[ -d $project ]] || { print -u2 -- "Project directory does not exist: $project"; exit 1; }
+  project=${project:A}
+fi
 project_marker="cproj:$project"
 if (( sync_sidebar || (! force_new && ! dry_run) )); then
   tree=$(cmux --json tree --all) || exit 1
@@ -210,11 +302,21 @@ if (( sync_sidebar || (! force_new && ! dry_run) )); then
   if [[ -n $existing ]]; then
     workspace=$(print -r -- "$existing" | jq -er '.id') || exit 1
     window=$(print -r -- "$existing" | jq -er '.cproj_window') || exit 1
+    if (( park )); then
+      park_project "$project" "$workspace" "$window"
+      exit $?
+    fi
     style_workspace "$existing" "$project" yes || exit 1
     cmux select-workspace --workspace "$workspace" --window "$window" || exit 1
-    cmux focus-window --window "$window"
-    exit $?
+    cmux focus-window --window "$window" || exit 1
+    if (( cold )); then rm -f -- "$(parked_file "$project")" || exit 1; fi
+    exit 0
   fi
+fi
+
+if (( park )); then
+  print -u2 -- "No open cproj workspace found for: $project"
+  exit 1
 fi
 
 # Reusing a workspace does not require the original agent/editor on PATH.
@@ -268,4 +370,5 @@ record=$(cmux --json list-workspaces --window "$window" | jq -ce \
   '.workspaces[] | select(.ref==$ref) | . + {cproj_window:$window}') || exit 1
 workspace=$(print -r -- "$record" | jq -er '.id') || exit 1
 style_workspace "$record" "$project" yes top || exit 1
-cmux select-workspace --workspace "$workspace" --window "$window"
+cmux select-workspace --workspace "$workspace" --window "$window" || exit 1
+if (( cold )); then rm -f -- "$(parked_file "$project")" || exit 1; fi

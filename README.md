@@ -85,6 +85,9 @@ Run it from cmux while the app is open:
 ```sh
 cproj                               # Fuzzy-pick a Git project under ~/Developer
 cproj .                             # Focus this project's workspace, or create it
+cproj --park                        # Close this cproj workspace into the cold list
+cproj --cold                        # Pick and reopen a parked project
+cproj --cold --list                 # Show parked projects without opening one
 cproj --new .                       # Explicitly create another workspace
 cproj --agent claude ~/path/to/repo  # Choose a different AI CLI
 cproj --agent 'codex resume' .       # Pick a previous Codex session for this directory
@@ -118,7 +121,7 @@ Builds/tests are not started automatically. The shell pane is ready for the
 project's existing commands. SSH workspaces can still be opened with `cmux ssh`;
 `cproj` creates local workspaces.
 
-### Sidebar groups and colors
+### Sidebar groups
 
 The public launcher contains no project-specific roots or group names. Optional
 private settings are read from `${PERSONAL_FILES:-~/.personal-files}/cproj.json`,
@@ -136,7 +139,6 @@ Keep a configuration like this in your own private dotfiles repository:
     {
       "path": "~/Developer/example-team",
       "name": "Work",
-      "color": "#89b4fa",
       "root": "~/Developer/example-team"
     }
   ]
@@ -147,7 +149,9 @@ Groups use the longest matching directory prefix. `root` inside a group is
 optional and defaults to its `path`; multiple paths can share a group name.
 New `cproj` workspaces appear directly below their group's header. Headers are
 terminal workspaces at the configured group root. Matching groups are reused by
-name within each window. Group colors/icons persist in cmux's local session state.
+name within each window. `cproj` repairs inherited group membership when a
+workspace is created from another group's selected workspace. It leaves colors
+available for manual attention markers and cmux notifications.
 Keep work-only Brewfiles in your private repository as well.
 
 The private config can also contain a `layout` object using cmux's workspace
@@ -160,16 +164,18 @@ Use `cproj --dry-run .` to inspect the result before opening a new workspace.
 Custom layouts apply only when creating workspaces; reusing a workspace never
 replaces or rearranges its running terminals.
 
-Run `cproj --sync-sidebar` to apply the grouping/colors to existing local
-workspaces and migrate old cproj descriptions without restarting their programs.
+Run `cproj --sync-sidebar` to repair grouping for existing cproj workspaces
+and migrate old cproj descriptions without restarting their programs.
 The command restores each window's selected workspace when finished.
-Remote workspaces are excluded. Existing custom descriptions are kept;
-group/color choices for these project families are reapplied by cproj.
+Remote workspaces are excluded. Non-cproj workspaces keep their placement;
+legacy group anchors have their family colors cleared. Existing custom
+descriptions are kept. Legacy family colors are cleared where they match the
+private config; other colors are preserved. The old `color` keys may be removed
+from the private config after running the migration once on each machine.
 
-Descriptions and notification-driven ordering remain enabled. cmux's current
-ordering implementation moves a notified member directly below its group anchor
-and also moves its unpinned group upward; this is not a strict most-recent-focus
-sort. New workspaces created with the group + button also use top placement.
+Descriptions and notification indicators remain enabled. Notifications no longer
+reorder groups or workspaces, keeping project locations stable. New workspaces
+created with the group + button use top placement within that group.
 
 ### Reopening projects after quitting cmux
 
@@ -179,11 +185,24 @@ working directories, and browser state on normal launch. There is no separate
 continues after relaunch. Close an individual workspace to remove it from the
 set of open projects; quit the app with workspaces open to restore them later.
 
+To keep the sidebar focused, run `cproj --park` inside a cproj workspace (or
+`cproj --park /path/to/project` from elsewhere). This saves only its project path
+under `~/.local/state/cproj/parked` and closes that workspace. `cproj --cold`
+shows parked projects and reopens one using the configured `resumeAgent` command
+(by default `codex resume`); `--cold --list` prints the paths. Once reopened,
+the entry leaves the cold list. Parking ends running terminals and does not
+snapshot editor buffers or shell processes, so save work before parking. cmux's
+regular quit-and-relaunch session restore remains separate from this flow.
+
 Restoring a workspace does not checkpoint running processes or unsaved Neovim
 buffers. Save editor changes before quitting; reopen Neovim and restart dev
 servers as needed. Supported AI sessions can resume if cmux captured their native
 session IDs and **Resume Agent Sessions on Reopen** is enabled. Agent hooks can
 be installed with `cmux hooks setup --agent codex` (or the appropriate agent).
+For cproj's direct `codex` launch, keep the cmux Codex hooks installed so
+conversation previews and completion notifications reach the sidebar. If those
+stop updating, run `cmux hooks codex install --yes`, then restart or resume the
+already-running Codex process; it reads hook configuration at startup.
 See [cmux session restore](https://cmux.com/docs/session-restore).
 For manual recovery, use **History > Restore Previous App Launch** or
 `cmux restore-session`; this is separate from normal `cproj` reuse.
