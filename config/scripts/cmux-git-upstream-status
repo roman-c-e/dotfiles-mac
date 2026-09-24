@@ -1,0 +1,68 @@
+#!/bin/zsh
+# Show actionable Git upstream state as a cmux sidebar pill.
+emulate -L zsh
+setopt pipefail
+
+workspace=${CMUX_WORKSPACE_ID:-}
+[[ -n $workspace ]] || exit 0
+(( $+commands[cmux] )) || exit 0
+
+status_key=git_upstream
+clear_status() {
+  cmux clear-status "$status_key" --workspace "$workspace" >/dev/null 2>&1 || true
+}
+
+(( $+commands[git] )) || { clear_status; exit 0; }
+repo=$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null) || {
+  clear_status
+  exit 0
+}
+upstream=$(git -C "$repo" rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null) || {
+  clear_status
+  exit 0
+}
+remote=${upstream%%/*}
+
+# Fetch at most once per repository during the interval. Every prompt may start
+# this script, so a directory lock also prevents simultaneous fetches in panes.
+cache_dir=${XDG_CACHE_HOME:-$HOME/.cache}/cmux-git-upstream
+mkdir -p "$cache_dir" || exit 0
+digest=$(print -rn -- "$repo" | shasum -a 256) || exit 0
+stamp="$cache_dir/${digest%% *}.fetched"
+lock="$stamp.lock"
+interval=${CMUX_GIT_FETCH_INTERVAL:-300}
+now=$(date +%s) || exit 0
+last=0
+[[ -r $stamp ]] && read -r last < "$stamp"
+
+if (( interval <= 0 || now - last >= interval )); then
+  if mkdir "$lock" 2>/dev/null; then
+    trap 'rmdir "$lock" 2>/dev/null' EXIT INT TERM
+    if GIT_TERMINAL_PROMPT=0 git -C "$repo" fetch --quiet --no-tags "$remote"; then
+      print -r -- "$now" >| "$stamp"
+    else
+      # Keep the previous pill when the remote cannot be checked. Clearing it
+      # would incorrectly imply that the branch is current.
+      exit 0
+    fi
+  fi
+fi
+
+counts=$(git -C "$repo" rev-list --left-right --count 'HEAD...@{upstream}' 2>/dev/null) || {
+  clear_status
+  exit 0
+}
+read -r ahead behind <<< "$counts"
+
+if (( behind > 0 && ahead > 0 )); then
+  cmux set-status "$status_key" "↑$ahead ↓$behind diverged" \
+    --workspace "$workspace" --icon arrow.triangle.branch \
+    --color '#F38BA8' --priority 70 >/dev/null 2>&1
+elif (( behind > 0 )); then
+  cmux set-status "$status_key" "↓$behind behind" \
+    --workspace "$workspace" --icon arrow.down.circle.fill \
+    --color '#FAB387' --priority 70 >/dev/null 2>&1
+else
+  # Ahead-only branches are not outdated; keep the sidebar quiet.
+  clear_status
+fi

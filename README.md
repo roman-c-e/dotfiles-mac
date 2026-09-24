@@ -177,6 +177,13 @@ Descriptions and notification indicators remain enabled. Notifications no longer
 reorder groups or workspaces, keeping project locations stable. New workspaces
 created with the group + button use top placement within that group.
 
+The shell also checks each repository's configured upstream in the background.
+After a throttled `git fetch`, cmux shows an orange `↓N behind` status pill when
+the remote branch has new commits, or a red `↑N ↓N diverged` pill when both
+sides have commits. Current and ahead-only branches stay unmarked. The default
+fetch interval is five minutes; set `CMUX_GIT_FETCH_INTERVAL` to another number
+of seconds when needed.
+
 ### Reopening projects after quitting cmux
 
 cmux automatically saves and restores open windows, workspaces, pane layouts,

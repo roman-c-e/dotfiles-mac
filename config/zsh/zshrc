@@ -62,3 +62,13 @@ if [[ -f "$HOME/.fzf.zsh" ]]; then
 elif (( $+commands[fzf] )); then
   eval "$(fzf --zsh)"
 fi
+
+# Refresh actionable Git upstream state without delaying the prompt. The helper
+# throttles network fetches per repository and clears its pill when current.
+if (( $+commands[cmux-git-upstream-status] )); then
+  autoload -Uz add-zsh-hook
+  _cmux_git_upstream_status_precmd() {
+    cmux-git-upstream-status >/dev/null 2>&1 &!
+  }
+  add-zsh-hook precmd _cmux_git_upstream_status_precmd
+fi
