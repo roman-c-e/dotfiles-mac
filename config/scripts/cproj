@@ -333,14 +333,19 @@ done
 agent_command="cd -- ${(q)project} && ${(j: :)${(@q)agent_words}}"
 editor_command="cd -- ${(q)project} && nvim"
 shell_command="cd -- ${(q)project}"
+git_command="$shell_command && lazygit"
 layout=$(jq -nc --arg agent "$agent_command" --arg editor "$editor_command" \
-  --arg shell "$shell_command" --arg agent_name "$agent" '
-  {direction:"horizontal", split:0.5, children:[
-    {pane:{surfaces:[{type:"terminal",name:$agent_name,command:$agent,focus:true}]}},
-    {direction:"vertical",split:0.7,children:[
-      {pane:{surfaces:[{type:"terminal",name:"Editor",command:$editor}]}},
-      {pane:{surfaces:[{type:"terminal",name:"Build / test",command:$shell}]}}
-    ]}
+  --arg shell "$shell_command" --arg git "$git_command" --arg agent_name "$agent" '
+  {direction:"vertical", split:0.7, children:[
+    {pane:{surfaces:[
+      {type:"terminal",name:$agent_name,command:$agent,focus:true},
+      {type:"terminal",name:"Editor",command:$editor},
+      {type:"terminal",name:"Git",command:$git}
+    ]}},
+    {pane:{surfaces:[
+      {type:"terminal",name:"Shell",command:$shell},
+      {type:"terminal",name:"Logs",command:$shell}
+    ]}}
   ]}') || exit 1
 
 # Optional private layout uses the cmux layout schema with exact command tokens.
@@ -348,7 +353,7 @@ layout=$(jq -nc --arg agent "$agent_command" --arg editor "$editor_command" \
 if print -r -- "$settings" | jq -e '.layout != null' >/dev/null; then
   layout=$(print -r -- "$settings" | jq -ce --arg agent "$agent_command" \
     --arg editor "$editor_command" --arg shell "$shell_command" \
-    --arg git "$shell_command && lazygit" '
+    --arg git "$git_command" '
     .layout | if type != "object" then error("layout must be an object") else . end |
     walk(if type == "object" and has("command") then
       .command = ({"{{agent}}":$agent,"{{editor}}":$editor,

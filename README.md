@@ -78,8 +78,8 @@ omissions explicitly marked. Review these drafts for missing details.
 If the staging area or HEAD changes during generation or
 review, the script aborts so you can generate a fresh message.
 
-By default, `cproj` opens a new cmux workspace with three panes: an AI CLI on
-the left, Neovim at the upper right, and a shell for builds/tests below it.
+By default, `cproj` opens a two-pane cmux workspace. The top pane contains
+Agent, Editor, and Git tabs; the bottom pane contains Shell and Logs tabs.
 Run it from cmux while the app is open:
 
 ```sh
@@ -184,6 +184,10 @@ branch has new commits, or red `↑N ↓N diverged` when both sides have commits
 Only clean, synchronized branches stay unmarked. The default fetch interval is
 five minutes; set `CMUX_GIT_FETCH_INTERVAL` to another number of seconds when
 needed.
+
+cmux tabs use `Option+Command+1…9` in this configuration. The first three select
+Agent, Editor, and Git in the top pane; after focusing the bottom pane, the first
+two select Shell and Logs. Workspaces keep cmux's `Command+1…9` shortcuts.
 
 ### Reopening projects after quitting cmux
 

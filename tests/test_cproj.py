@@ -252,6 +252,21 @@ else:
         self.assertNotIn('{{', json.dumps(layout))
         self.assertNotIn('lazygit', logs['command'])
 
+    def test_default_layout_uses_two_stacked_tabbed_panes(self):
+        self.config.write_text('{}')
+        result, calls = self.run_launcher({}, '--new')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        creation = next(c for c in calls if c[:2] == ['workspace', 'create'])
+        layout = json.loads(creation[creation.index('--layout') + 1])
+        self.assertEqual(layout['direction'], 'vertical')
+        self.assertEqual(len(layout['children']), 2)
+        top = layout['children'][0]['pane']['surfaces']
+        bottom = layout['children'][1]['pane']['surfaces']
+        self.assertEqual([surface['name'] for surface in top], ['codex', 'Editor', 'Git'])
+        self.assertEqual([surface['name'] for surface in bottom], ['Shell', 'Logs'])
+        self.assertTrue(top[0]['focus'])
+        self.assertTrue(top[2]['command'].endswith('&& lazygit'))
+
     def test_new_grouped_project_is_placed_after_anchor(self):
         self.project = self.root / 'Developer/product/example'
         self.project.mkdir(parents=True)
