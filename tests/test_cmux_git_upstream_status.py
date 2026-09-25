@@ -88,6 +88,20 @@ with open(os.environ['CMUX_TEST_LOG'], 'a') as log:
                          ["set-status", "git_upstream", "↑1 ↓1 diverged"])
         self.assertIn("#F38BA8", calls[-1])
 
+    def test_dirty_and_ahead_are_visible(self):
+        (self.work / "dirty.txt").write_text("dirty\n")
+        result, calls = self._run()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(calls[-1][0:3], ["set-status", "git_upstream", "dirty"])
+        self.assertIn("#F9E2AF", calls[-1])
+
+        self._git(self.work, "add", "dirty.txt")
+        self._git(self.work, "commit", "-m", "local")
+        result, calls = self._run()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(calls[-1][0:3], ["set-status", "git_upstream", "↑1 ahead"])
+        self.assertIn("#89B4FA", calls[-1])
+
     def test_missing_upstream_clears_old_status(self):
         self._git(self.work, "branch", "--unset-upstream")
         result, calls = self._run()

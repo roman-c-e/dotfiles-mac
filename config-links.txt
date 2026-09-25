@@ -18,6 +18,7 @@ opencode/opencode.json
 opencode/package-lock.json
 scripts/ai-commit
 scripts/cproj
+scripts/cmux-git-upstream-status
 scripts/pip.sh
 starship/starship.toml
 wallpaper/guts-berserk-dark-5120x2880-19127.jpg

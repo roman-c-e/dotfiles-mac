@@ -53,6 +53,8 @@ counts=$(git -C "$repo" rev-list --left-right --count 'HEAD...@{upstream}' 2>/de
   exit 0
 }
 read -r ahead behind <<< "$counts"
+dirty=0
+[[ -n $(git -C "$repo" status --porcelain 2>/dev/null) ]] && dirty=1
 
 if (( behind > 0 && ahead > 0 )); then
   cmux set-status "$status_key" "↑$ahead ↓$behind diverged" \
@@ -62,7 +64,14 @@ elif (( behind > 0 )); then
   cmux set-status "$status_key" "↓$behind behind" \
     --workspace "$workspace" --icon arrow.down.circle.fill \
     --color '#FAB387' --priority 70 >/dev/null 2>&1
+elif (( ahead > 0 )); then
+  cmux set-status "$status_key" "↑$ahead ahead" \
+    --workspace "$workspace" --icon arrow.up.circle.fill \
+    --color '#89B4FA' --priority 70 >/dev/null 2>&1
+elif (( dirty )); then
+  cmux set-status "$status_key" "dirty" \
+    --workspace "$workspace" --icon circle.fill \
+    --color '#F9E2AF' --priority 70 >/dev/null 2>&1
 else
-  # Ahead-only branches are not outdated; keep the sidebar quiet.
   clear_status
 fi
