@@ -277,11 +277,6 @@ for packages; existing Zap and Neovim plugin installations are preserved.
 Parsec can still be installed separately if needed.
 
 # Evaluate
-## Aerospace 
-Working mostly
-- Autoraise missing
-- Issues with multiple monitors
-- Intellij Bug
 ## Sketchybar
 does not work with magnet because gap on top
 items not clickable, but this could be better because avoidance of mouse/trackpad
